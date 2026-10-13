@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0
+## [1.0.0] - 2026-10-12
 
 `fld` 1.0.0 is a rewrite in C++17 with no dependencies. It builds with `make` and has three subcommands: `pipeline`, `barcodes`, and `m2`.
 

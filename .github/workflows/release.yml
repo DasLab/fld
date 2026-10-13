@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  # The release job waits on this one, so a tag which disagrees with the
+  # header or with the changelog fails before anything is built.
+  check:
+    name: Check the tag against the version and the changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the tag against the version the program reports
+        run: bash scripts/check-tag.sh "$GITHUB_REF_NAME"
+
+      - name: Check the changelog holds an entry for the version
+        run: bash scripts/release-notes.sh "${GITHUB_REF_NAME#v}" > /dev/null
+
+  # Draft, so the release can be inspected before it is published. This is the
+  # only job which writes to the repository.
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build and test the tagged commit
+        run: |
+          make
+          make test
+          bin/fld --version
+
+      # The release says what the changelog says, rather than repeating it by
+      # hand in the draft.
+      - name: Take the release notes from the changelog
+        run: bash scripts/release-notes.sh "${GITHUB_REF_NAME#v}" > notes.md
+
+      # `gh release create` runs only where the tag has no release, so a re-run
+      # of a job which failed partway finishes the release rather than stopping
+      # on it. The notes go in at creation, so an edit made in the draft stays.
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --draft --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md
