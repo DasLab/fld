@@ -135,6 +135,39 @@ TEST_CASE("pipeline adds complement mutants as a separate sublibrary") {
     check_outputs(dir, options, 8);
 }
 
+static size_t mismatches(const std::string& a, const std::string& b) {
+    REQUIRE(a.size() == b.size());
+    size_t count = 0;
+    for (size_t i = 0; i < a.size(); i++) count += a[i] != b[i];
+    return count;
+}
+
+TEST_CASE("pipeline builds the mutants from the resolved wild type") {
+    TempDir dir;
+    write_fasta_file(dir.file("in.fasta"), {{"one", "NNNNNNNNacgu"}});
+    PipelineOptions options = base_options(dir, "padding,design");
+    options.m2 = true;
+    run_pipeline(options);
+    std::vector<std::vector<std::string>> rows = read_csv_file(dir.file("out/" + LIBRARY_CSV));
+    REQUIRE(rows.size() == 1 + 1 + 12);
+    size_t design_col = column_index(rows[0], "design");
+    const std::string& wild_type = rows[1][design_col];
+    for (size_t r = 2; r < rows.size(); r++) {
+        CHECK(mismatches(wild_type, rows[r][design_col]) == 1);
+    }
+}
+
+TEST_CASE("pipeline leaves no output directory when the input is invalid") {
+    TempDir dir;
+    write_fasta_file(dir.file("in.fasta"), {{"bad", "ACGTX"}});
+    PipelineOptions options = base_options(dir, "padding,design");
+    CHECK_THROWS(run_pipeline(options));
+    CHECK(!std::filesystem::exists(options.output_dir));
+    options.overwrite = false;
+    write_fasta_file(dir.file("in.fasta"), {{"good", "ACGT"}});
+    CHECK_NOTHROW(run_pipeline(options));
+}
+
 TEST_CASE("pipeline rejects input file names with whitespace") {
     TempDir dir;
     write_fasta_file(dir.file("my lib.fasta"), {{"one", "ACGT"}});

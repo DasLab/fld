@@ -14,7 +14,12 @@ static FastaEntry mutant(const FastaEntry& entry, size_t position, char base) {
     return result;
 }
 
-std::vector<FastaEntry> complement_mutants(const FastaEntry& entry) {
+static FastaEntry uppercase_entry(const FastaEntry& raw) {
+    return FastaEntry{raw.name, uppercase(raw.sequence)};
+}
+
+std::vector<FastaEntry> complement_mutants(const FastaEntry& raw) {
+    FastaEntry entry = uppercase_entry(raw);
     Alphabet alphabet = detect_alphabet(entry.sequence);
     std::vector<FastaEntry> mutants;
     for (size_t i = 0; i < entry.sequence.size(); i++) {
@@ -25,7 +30,8 @@ std::vector<FastaEntry> complement_mutants(const FastaEntry& entry) {
     return mutants;
 }
 
-std::vector<FastaEntry> all_mutants(const FastaEntry& entry) {
+std::vector<FastaEntry> all_mutants(const FastaEntry& raw) {
+    FastaEntry entry = uppercase_entry(raw);
     Alphabet alphabet = detect_alphabet(entry.sequence);
     std::vector<FastaEntry> mutants;
     for (size_t i = 0; i < entry.sequence.size(); i++) {
@@ -39,7 +45,7 @@ std::vector<FastaEntry> all_mutants(const FastaEntry& entry) {
 }
 
 static void write_wild_type(std::ostream& out, const FastaEntry& entry) {
-    write_fasta_entry(out, FastaEntry{entry.name + WILD_TYPE_SUFFIX, entry.sequence});
+    write_fasta_entry(out, FastaEntry{entry.name + WILD_TYPE_SUFFIX, uppercase(entry.sequence)});
 }
 
 static void write_mutants(std::ostream& out, const FastaEntry& entry, bool all) {

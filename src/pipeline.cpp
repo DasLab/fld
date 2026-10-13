@@ -108,11 +108,34 @@ static std::vector<FastaEntry> mutants_of(const std::vector<FastaEntry>& entries
     return mutants;
 }
 
-static std::vector<Sublibrary> load_sublibraries(const PipelineOptions& options) {
+// Normalizes the sequence to DNA and replaces its IUPAC codes with random bases.
+static FastaEntry resolve_entry(const FastaEntry& entry, const std::string& sublibrary, Rng& rng) {
+    try {
+        return FastaEntry{entry.name, resolve_polybases(normalize_sequence(entry.sequence), rng)};
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error("Entry '" + entry.name + "' in " + sublibrary + ": " + e.what());
+    }
+}
+
+static std::vector<FastaEntry> resolve_entries(
+    const std::vector<FastaEntry>& entries,
+    const std::string& sublibrary,
+    Rng& rng
+) {
+    std::vector<FastaEntry> resolved;
+    for (const FastaEntry& entry : entries) {
+        resolved.push_back(resolve_entry(entry, sublibrary, rng));
+    }
+    return resolved;
+}
+
+// Reads each input file and resolves its entries. The mutants are built from the resolved
+// entries, so each mutant differs from its wild type at exactly one position.
+static std::vector<Sublibrary> load_sublibraries(const PipelineOptions& options, Rng& rng) {
     std::vector<Sublibrary> sublibraries;
     for (const std::string& input : options.inputs) {
         std::string name = sublibrary_name(input);
-        std::vector<FastaEntry> entries = read_fasta(input);
+        std::vector<FastaEntry> entries = resolve_entries(read_fasta(input), name, rng);
         progress() << "Read " << entries.size() << " sequences from " << input << "\n";
         sublibraries.push_back(Sublibrary{name, entries});
         if (options.m2) {
@@ -122,20 +145,11 @@ static std::vector<Sublibrary> load_sublibraries(const PipelineOptions& options)
     return sublibraries;
 }
 
-static std::string design_sequence(const FastaEntry& entry, const std::string& sublibrary, Rng& rng) {
-    try {
-        return resolve_polybases(normalize_sequence(entry.sequence), rng);
-    } catch (const std::runtime_error& e) {
-        throw std::runtime_error("Entry '" + entry.name + "' in " + sublibrary + ": " + e.what());
-    }
-}
-
 static Construct make_construct(
     const Layout& layout,
     size_t index,
     const FastaEntry& entry,
-    const std::string& sublibrary,
-    Rng& rng
+    const std::string& sublibrary
 ) {
     Construct construct;
     construct.index = index;
@@ -145,17 +159,17 @@ static Construct make_construct(
     for (size_t i = 0; i < layout.slots.size(); i++) {
         construct.parts[i] = layout.slots[i].constant;
     }
-    construct.parts[design_slot(layout)] = design_sequence(entry, sublibrary, rng);
+    construct.parts[design_slot(layout)] = entry.sequence;
     return construct;
 }
 
 static Library load_library(const PipelineOptions& options, Rng& rng) {
     Library library;
     library.layout = options.layout;
-    for (const Sublibrary& sublibrary : load_sublibraries(options)) {
+    for (const Sublibrary& sublibrary : load_sublibraries(options, rng)) {
         for (size_t i = 0; i < sublibrary.entries.size(); i++) {
             library.constructs.push_back(
-                make_construct(options.layout, i, sublibrary.entries[i], sublibrary.name, rng));
+                make_construct(options.layout, i, sublibrary.entries[i], sublibrary.name));
         }
     }
     if (library.constructs.empty()) {
@@ -337,11 +351,12 @@ static void write_outputs(const Library& library, const std::string& output_dir)
 
 void run_pipeline(const PipelineOptions& options) {
     validate_options(options);
-    create_output_dirs(options);
     Rng rng = make_rng(options.seed);
     Library library = load_library(options, rng);
     std::vector<std::string> designs = design_sequences(library);
     std::vector<ComponentSet> sets = generate_components(library, options, rng);
+    // Created after loading and generation, so a failed run leaves no output directory.
+    create_output_dirs(options);
     std::vector<double> design_reads;
     if (options.predict) {
         design_reads = assign_by_prediction(library, sets, tmp_dir(options));
