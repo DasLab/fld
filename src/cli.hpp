@@ -1,0 +1,74 @@
+#ifndef FLD_CLI_HPP
+#define FLD_CLI_HPP
+
+#include <cstddef>
+#include <map>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+// Thrown when the user asks for help. The message is the usage text.
+class HelpRequested : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+struct OptionSpec {
+    std::string name;
+    std::string help;
+    bool is_flag = false;
+    bool required = false;
+    bool has_default = false;
+    std::string default_value;
+};
+
+// The options of one subcommand.
+class Command {
+public:
+    Command(const std::string& name, const std::string& description);
+
+    // Adds an option that must be given.
+    void add_option(const std::string& name, const std::string& help);
+
+    // Adds an option with a default value.
+    void add_option(const std::string& name, const std::string& help, const std::string& default_value);
+
+    // Adds an option that may be absent.
+    void add_optional(const std::string& name, const std::string& help);
+
+    void add_flag(const std::string& name, const std::string& help);
+
+    // Accepts one or more positional arguments.
+    void add_positionals(const std::string& name, const std::string& help);
+
+    void parse(const std::vector<std::string>& args);
+
+    bool has(const std::string& name) const;
+    std::string value(const std::string& name) const;
+
+    // Parses the value as a count, which accepts "unlimited".
+    size_t count_value(const std::string& name) const;
+
+    bool flag(const std::string& name) const;
+    const std::vector<std::string>& positionals() const;
+
+    std::string usage() const;
+
+private:
+    std::string _name;
+    std::string _description;
+    std::string _positional_name;
+    std::string _positional_help;
+    std::vector<OptionSpec> _specs;
+    std::map<std::string, std::string> _values;
+    std::set<std::string> _flags;
+    std::vector<std::string> _positionals;
+
+    const OptionSpec* find_spec(const std::string& name) const;
+    const OptionSpec& spec(const std::string& name) const;
+    void parse_option(const OptionSpec& spec, const std::vector<std::string>& args, size_t& i);
+    void check_required() const;
+    void check_positionals() const;
+};
+
+#endif

@@ -1,0 +1,44 @@
+#ifndef FLD_SEQUENCE_HPP
+#define FLD_SEQUENCE_HPP
+
+#include <string>
+#include <vector>
+
+#include "random.hpp"
+
+constexpr char BASE_A = 'A';
+constexpr char BASE_C = 'C';
+constexpr char BASE_G = 'G';
+constexpr char BASE_T = 'T';
+constexpr char BASE_U = 'U';
+
+enum class Alphabet { DNA, RNA };
+
+// Returns true for A, C, G, T, and U.
+bool is_concrete_base(char base);
+
+// Returns true for A, C, G, and T.
+bool is_dna_base(char base);
+
+std::string uppercase(const std::string& text);
+
+// Uppercases the sequence, converts U to T, and rejects characters that are not IUPAC codes.
+std::string normalize_sequence(const std::string& raw);
+
+// Replaces each IUPAC code with a random base that the code denotes. The input must be normalized.
+std::string resolve_polybases(const std::string& seq, Rng& rng);
+
+std::string random_sequence(size_t length, Rng& rng);
+
+// Returns RNA when the sequence contains U, and DNA otherwise.
+Alphabet detect_alphabet(const std::string& seq);
+
+const std::vector<char>& alphabet_bases(Alphabet alphabet);
+
+// Returns the Watson-Crick complement written in the given alphabet.
+char complement(char base, Alphabet alphabet);
+
+std::string to_dna(const std::string& seq);
+std::string to_rna(const std::string& seq);
+
+#endif
