@@ -186,16 +186,16 @@ TEST_CASE("pipeline without padding ignores the padding stem limits") {
     CHECK_NOTHROW(run_pipeline(options));
 }
 
-TEST_CASE("pipeline removes the intermediate files of an earlier run") {
+TEST_CASE("pipeline keeps the files that it did not write in the tmp directory") {
     TempDir dir;
     write_fasta_file(dir.file("in.fasta"), {{"one", "ACGT"}});
     PipelineOptions options = base_options(dir, "padding,design");
     run_pipeline(options);
     std::filesystem::create_directories(dir.file("out/tmp"));
-    write_fasta_file(dir.file("out/tmp/stale.fasta"), {{"old", "ACGT"}});
+    write_fasta_file(dir.file("out/tmp/unrelated.fasta"), {{"old", "ACGT"}});
     options.overwrite = true;
     run_pipeline(options);
-    CHECK(!std::filesystem::exists(dir.file("out/tmp/stale.fasta")));
+    CHECK(std::filesystem::exists(dir.file("out/tmp/unrelated.fasta")));
 }
 
 TEST_CASE("pipeline rejects a mutant sublibrary that collides with an input") {

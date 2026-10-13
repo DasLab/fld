@@ -133,11 +133,8 @@ static std::string tmp_dir(const PipelineOptions& options) {
     return join_path(options.output_dir, TMP_DIR);
 }
 
-// Removes the intermediate files of an earlier run, because rn-coverage appends to existing
-// prediction files.
 static void create_output_dirs(const PipelineOptions& options) {
     std::filesystem::create_directories(options.output_dir);
-    std::filesystem::remove_all(tmp_dir(options));
     if (options.predict) {
         std::filesystem::create_directories(tmp_dir(options));
     }

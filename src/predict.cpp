@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 
 #include <cstdlib>
+#include <filesystem>
 #include <map>
 #include <stdexcept>
 
@@ -63,6 +64,32 @@ static std::vector<double> read_reads_file(const std::string& path, size_t expec
     return reads;
 }
 
+// The files of one rn-coverage run, named relative to the work directory.
+struct PredictionFiles {
+    std::string text;
+    std::string tokens;
+    std::string prediction_dir;
+    std::string prediction;
+    std::string reads;
+};
+
+static PredictionFiles prediction_files(const std::string& label) {
+    PredictionFiles files;
+    files.text = label + ".txt";
+    files.tokens = label + "_tokens.h5";
+    files.prediction_dir = label + "_predictions";
+    files.prediction = join_path(files.prediction_dir, files.tokens);
+    files.reads = label + "_reads.txt";
+    return files;
+}
+
+// Removes the output files of an earlier run, because rn-coverage appends to existing files.
+static void remove_earlier_outputs(const std::string& work_dir, const PredictionFiles& files) {
+    for (const std::string& name : {files.tokens, files.prediction, files.reads}) {
+        std::filesystem::remove(join_path(work_dir, name));
+    }
+}
+
 // Predicts sequences of one common length through tokenize, predict, and extract. The files
 // are named after the label and live in the work directory.
 static std::vector<double> predict_equal_length(
@@ -70,16 +97,13 @@ static std::vector<double> predict_equal_length(
     const std::string& work_dir,
     const std::string& label
 ) {
-    std::string text_name = label + ".txt";
-    std::string tokens_name = label + "_tokens.h5";
-    std::string prediction_dir = label + "_predictions";
-    std::string prediction_name = join_path(prediction_dir, tokens_name);
-    std::string reads_name = label + "_reads.txt";
-    write_lines(join_path(work_dir, text_name), sequences);
-    run_command(work_dir, std::string(RN_COVERAGE) + " tokenize " + shell_quote(text_name) + " " + shell_quote(tokens_name));
-    run_command(work_dir, std::string(RN_COVERAGE) + " predict " + shell_quote(tokens_name) + " -o " + shell_quote(prediction_dir));
-    run_command(work_dir, std::string(RN_COVERAGE) + " extract " + shell_quote(prediction_name) + " " + shell_quote(reads_name));
-    return read_reads_file(join_path(work_dir, reads_name), sequences.size());
+    PredictionFiles files = prediction_files(label);
+    remove_earlier_outputs(work_dir, files);
+    write_lines(join_path(work_dir, files.text), sequences);
+    run_command(work_dir, std::string(RN_COVERAGE) + " tokenize " + shell_quote(files.text) + " " + shell_quote(files.tokens));
+    run_command(work_dir, std::string(RN_COVERAGE) + " predict " + shell_quote(files.tokens) + " -o " + shell_quote(files.prediction_dir));
+    run_command(work_dir, std::string(RN_COVERAGE) + " extract " + shell_quote(files.prediction) + " " + shell_quote(files.reads));
+    return read_reads_file(join_path(work_dir, files.reads), sequences.size());
 }
 
 static std::map<size_t, std::vector<size_t>> group_by_length(const std::vector<std::string>& sequences) {
