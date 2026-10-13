@@ -5,7 +5,6 @@
 #include <stdexcept>
 
 static const std::vector<char> DNA_BASES = {BASE_A, BASE_C, BASE_G, BASE_T};
-static const std::vector<char> RNA_BASES = {BASE_A, BASE_C, BASE_G, BASE_U};
 
 // Returns the DNA bases that an IUPAC code denotes, or null for any other character.
 static const char* polybase_options(char code) {
@@ -29,12 +28,12 @@ static const char* polybase_options(char code) {
     }
 }
 
-bool is_concrete_base(char base) {
-    return is_dna_base(base) || base == BASE_U;
-}
-
 bool is_dna_base(char base) {
     return base == BASE_A || base == BASE_C || base == BASE_G || base == BASE_T;
+}
+
+const std::vector<char>& dna_bases() {
+    return DNA_BASES;
 }
 
 std::string uppercase(const std::string& text) {
@@ -80,24 +79,12 @@ std::string random_sequence(size_t length, Rng& rng) {
     return seq;
 }
 
-Alphabet detect_alphabet(const std::string& seq) {
-    if (seq.find(BASE_U) != std::string::npos || seq.find('u') != std::string::npos) {
-        return Alphabet::RNA;
-    }
-    return Alphabet::DNA;
-}
-
-const std::vector<char>& alphabet_bases(Alphabet alphabet) {
-    return alphabet == Alphabet::RNA ? RNA_BASES : DNA_BASES;
-}
-
-char complement(char base, Alphabet alphabet) {
+char complement(char base) {
     switch (base) {
-        case BASE_A: return alphabet == Alphabet::RNA ? BASE_U : BASE_T;
+        case BASE_A: return BASE_T;
         case BASE_C: return BASE_G;
         case BASE_G: return BASE_C;
-        case BASE_T:
-        case BASE_U: return BASE_A;
+        case BASE_T: return BASE_A;
         default:
             throw std::runtime_error("Cannot complement '" + std::string(1, base) + "'");
     }

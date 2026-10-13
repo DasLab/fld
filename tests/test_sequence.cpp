@@ -26,17 +26,13 @@ TEST_CASE("resolve_polybases replaces codes with bases they denote") {
     }
 }
 
-TEST_CASE("complement uses the alphabet of the sequence") {
-    CHECK(complement('A', Alphabet::DNA) == 'T');
-    CHECK(complement('A', Alphabet::RNA) == 'U');
-    CHECK(complement('U', Alphabet::RNA) == 'A');
-    CHECK(complement('G', Alphabet::DNA) == 'C');
-    CHECK_THROWS(complement('N', Alphabet::DNA));
-}
-
-TEST_CASE("detect_alphabet finds U") {
-    CHECK(detect_alphabet("ACGU") == Alphabet::RNA);
-    CHECK(detect_alphabet("ACGT") == Alphabet::DNA);
+TEST_CASE("complement pairs the DNA bases") {
+    CHECK(complement('A') == 'T');
+    CHECK(complement('T') == 'A');
+    CHECK(complement('G') == 'C');
+    CHECK(complement('C') == 'G');
+    CHECK_THROWS(complement('N'));
+    CHECK_THROWS(complement('U'));
 }
 
 TEST_CASE("random_sequence has the requested length and only DNA bases") {

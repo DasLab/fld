@@ -8,6 +8,7 @@
 
 #include "assign.hpp"
 #include "barcode.hpp"
+#include "design.hpp"
 #include "fasta.hpp"
 #include "files.hpp"
 #include "library.hpp"
@@ -134,34 +135,13 @@ static std::vector<FastaEntry> mutants_of(const std::vector<FastaEntry>& entries
     return mutants;
 }
 
-// Normalizes the sequence to DNA and replaces its IUPAC codes with random bases.
-static FastaEntry resolve_entry(const FastaEntry& entry, const std::string& sublibrary, Rng& rng) {
-    try {
-        return FastaEntry{entry.name, resolve_polybases(normalize_sequence(entry.sequence), rng)};
-    } catch (const std::runtime_error& e) {
-        throw std::runtime_error("Entry '" + entry.name + "' in " + sublibrary + ": " + e.what());
-    }
-}
-
-static std::vector<FastaEntry> resolve_entries(
-    const std::vector<FastaEntry>& entries,
-    const std::string& sublibrary,
-    Rng& rng
-) {
-    std::vector<FastaEntry> resolved;
-    for (const FastaEntry& entry : entries) {
-        resolved.push_back(resolve_entry(entry, sublibrary, rng));
-    }
-    return resolved;
-}
-
 // Reads each input file and resolves its entries. The mutants are built from the resolved
 // entries, so each mutant differs from its wild type at exactly one position.
 static std::vector<Sublibrary> load_sublibraries(const PipelineOptions& options, Rng& rng) {
     std::vector<Sublibrary> sublibraries;
     for (const std::string& input : options.inputs) {
         std::string name = sublibrary_name(input);
-        std::vector<FastaEntry> entries = resolve_entries(read_fasta(input), name, rng);
+        std::vector<FastaEntry> entries = resolve_designs(read_fasta(input), name, rng);
         progress() << "Read " << entries.size() << " sequences from " << input << "\n";
         sublibraries.push_back(Sublibrary{name, entries});
         if (options.m2) {

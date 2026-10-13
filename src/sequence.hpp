@@ -12,13 +12,10 @@ constexpr char BASE_G = 'G';
 constexpr char BASE_T = 'T';
 constexpr char BASE_U = 'U';
 
-enum class Alphabet { DNA, RNA };
-
-// Returns true for A, C, G, T, and U.
-bool is_concrete_base(char base);
-
 // Returns true for A, C, G, and T.
 bool is_dna_base(char base);
+
+const std::vector<char>& dna_bases();
 
 std::string uppercase(const std::string& text);
 
@@ -30,13 +27,8 @@ std::string resolve_polybases(const std::string& seq, Rng& rng);
 
 std::string random_sequence(size_t length, Rng& rng);
 
-// Returns RNA when the sequence contains U, and DNA otherwise.
-Alphabet detect_alphabet(const std::string& seq);
-
-const std::vector<char>& alphabet_bases(Alphabet alphabet);
-
-// Returns the Watson-Crick complement written in the given alphabet.
-char complement(char base, Alphabet alphabet);
+// Returns the Watson-Crick complement of a DNA base.
+char complement(char base);
 
 std::string to_dna(const std::string& seq);
 std::string to_rna(const std::string& seq);

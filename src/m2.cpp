@@ -1,5 +1,8 @@
 #include "m2.hpp"
 
+#include <stdexcept>
+
+#include "design.hpp"
 #include "files.hpp"
 #include "sequence.hpp"
 
@@ -21,30 +24,28 @@ static FastaEntry mutant(const FastaEntry& entry, size_t position, char base) {
     return result;
 }
 
-static FastaEntry uppercase_entry(const FastaEntry& raw) {
-    return FastaEntry{raw.name, uppercase(raw.sequence)};
+static void require_dna_base(const FastaEntry& entry, char base) {
+    if (!is_dna_base(base)) {
+        throw std::logic_error("Entry '" + entry.name + "' contains '" + std::string(1, base) + "', which is not a DNA base");
+    }
 }
 
-std::vector<FastaEntry> complement_mutants(const FastaEntry& raw) {
-    FastaEntry entry = uppercase_entry(raw);
-    Alphabet alphabet = detect_alphabet(entry.sequence);
+std::vector<FastaEntry> complement_mutants(const FastaEntry& entry) {
     std::vector<FastaEntry> mutants;
     for (size_t i = 0; i < entry.sequence.size(); i++) {
         char original = entry.sequence[i];
-        if (!is_concrete_base(original)) continue;
-        mutants.push_back(mutant(entry, i, complement(original, alphabet)));
+        require_dna_base(entry, original);
+        mutants.push_back(mutant(entry, i, complement(original)));
     }
     return mutants;
 }
 
-std::vector<FastaEntry> all_mutants(const FastaEntry& raw) {
-    FastaEntry entry = uppercase_entry(raw);
-    Alphabet alphabet = detect_alphabet(entry.sequence);
+std::vector<FastaEntry> all_mutants(const FastaEntry& entry) {
     std::vector<FastaEntry> mutants;
     for (size_t i = 0; i < entry.sequence.size(); i++) {
         char original = entry.sequence[i];
-        if (!is_concrete_base(original)) continue;
-        for (char base : alphabet_bases(alphabet)) {
+        require_dna_base(entry, original);
+        for (char base : dna_bases()) {
             if (base != original) mutants.push_back(mutant(entry, i, base));
         }
     }
@@ -52,7 +53,7 @@ std::vector<FastaEntry> all_mutants(const FastaEntry& raw) {
 }
 
 static void write_wild_type(std::ostream& out, const FastaEntry& entry) {
-    write_fasta_entry(out, FastaEntry{with_suffix(entry.name, WILD_TYPE_SUFFIX), uppercase(entry.sequence)});
+    write_fasta_entry(out, FastaEntry{with_suffix(entry.name, WILD_TYPE_SUFFIX), entry.sequence});
 }
 
 static void write_mutants(std::ostream& out, const FastaEntry& entry, bool all) {
@@ -62,8 +63,8 @@ static void write_mutants(std::ostream& out, const FastaEntry& entry, bool all) 
     }
 }
 
-void run_m2(const std::string& input, const std::string& output, bool all, bool overwrite) {
-    std::vector<FastaEntry> entries = read_fasta(input);
+void run_m2(const std::string& input, const std::string& output, bool all, bool overwrite, Rng& rng) {
+    std::vector<FastaEntry> entries = resolve_designs(read_fasta(input), input, rng);
     require_writable(output, overwrite);
     std::ofstream out = open_output(output);
     for (const FastaEntry& entry : entries) {

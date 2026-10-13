@@ -140,6 +140,7 @@ static Command m2_command() {
     command.add_option(OUTPUT_OPTION, "Output FASTA file");
     command.add_flag(ALL_OPTION, "Write all three mutants per position instead of the complement only");
     command.add_flag(OVERWRITE_OPTION, "Overwrite an existing output file");
+    add_seed_option(command);
     return command;
 }
 
@@ -153,7 +154,8 @@ static std::string single_input(const Command& command) {
 int run_m2_command(const std::vector<std::string>& args) {
     Command command = m2_command();
     command.parse(args);
+    Rng rng = make_rng(seed_from(command));
     run_m2(single_input(command), command.value(OUTPUT_OPTION),
-           command.flag(ALL_OPTION), command.flag(OVERWRITE_OPTION));
+           command.flag(ALL_OPTION), command.flag(OVERWRITE_OPTION), rng);
     return 0;
 }

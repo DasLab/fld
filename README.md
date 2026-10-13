@@ -168,7 +168,7 @@ By default, the pipeline predicts reads with `rn-coverage` and chooses the paddi
 
 The same seed reproduces a run on the same platform and compiler. Different standard libraries draw different random numbers from one seed.
 
-`fld barcodes` takes `--count N`, `--length N`, `-o FILE`, `--overwrite`, `--seed N`, and the pair limits. `fld m2` takes a FASTA file, `-o FILE`, `--overwrite`, and `--all`, which writes all three mutants per position instead of the complement only.
+`fld barcodes` takes `--count N`, `--length N`, `-o FILE`, `--overwrite`, `--seed N`, and the pair limits. `fld m2` takes a FASTA file, `-o FILE`, `--overwrite`, `--seed N`, and `--all`, which writes all three mutants per position instead of the complement only. The sequences are normalized the same way as in the pipeline, so the output is uppercase DNA with every IUPAC code replaced.
 
 ## Development
 
