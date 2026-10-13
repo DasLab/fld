@@ -9,10 +9,10 @@
 #include "library.hpp"
 
 // Checks every assembled construct and throws on the first violation: the construct length,
-// the bases, the design against its input, and the constant regions.
+// the bases, the design against the IUPAC pattern of its input, and the constant regions.
 void verify_library(
     const Library& library,
-    const std::vector<std::string>& designs,
+    const std::vector<std::string>& patterns,
     size_t construct_length
 );
 

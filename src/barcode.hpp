@@ -9,9 +9,7 @@
 #include "random.hpp"
 #include "stem.hpp"
 
-// Returns the sequence and every sequence at Hamming distance one from it.
-std::vector<std::string> hamming_ball(const std::string& seq);
-
+// Returns true if the sequence, or any sequence at Hamming distance one from it, is in the set.
 bool has_hamming_neighbor(const std::string& seq, const std::unordered_set<std::string>& existing);
 
 // Counts the hairpins that satisfy the pair limits, saturating at UNLIMITED.

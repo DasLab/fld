@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <numeric>
 #include <set>
+#include <utility>
 #include <stdexcept>
 
 #include "assign.hpp"
@@ -318,24 +319,45 @@ static std::vector<double> assign_by_prediction(
     return design_reads;
 }
 
-static void fill_regions(Library& library, const std::vector<CandidateSet>& sets) {
-    for (const CandidateSet& set : sets) {
+// Moves each candidate into its construct. The assignment is a permutation, so each candidate
+// is moved once, and the sets hold no sequences afterwards.
+static void fill_regions(Library& library, std::vector<CandidateSet>& sets) {
+    for (CandidateSet& set : sets) {
         for (size_t i = 0; i < library.constructs.size(); i++) {
-            library.constructs[i].regions[set.region] = set.sequences[set.assignment[i]];
+            library.constructs[i].regions[set.region] = std::move(set.sequences[set.assignment[i]]);
         }
     }
+}
+
+// Reads the input files again and returns the IUPAC pattern of every construct, in library
+// order, so the assembled designs are checked against the files rather than against memory.
+static std::vector<std::string> input_patterns(const PipelineOptions& options) {
+    std::vector<std::string> patterns;
+    for (const std::string& input : options.inputs) {
+        std::vector<std::string> wild_types;
+        for (const FastaEntry& entry : read_fasta(input)) {
+            wild_types.push_back(normalize_sequence(entry.sequence));
+        }
+        patterns.insert(patterns.end(), wild_types.begin(), wild_types.end());
+        if (options.m2) {
+            for (const std::string& wild_type : wild_types) {
+                std::vector<std::string> mutants = complement_mutant_patterns(wild_type);
+                patterns.insert(patterns.end(), mutants.begin(), mutants.end());
+            }
+        }
+    }
+    return patterns;
 }
 
 static void verify_assembly(
     const Library& library,
     const std::vector<CandidateSet>& sets,
-    const std::vector<std::string>& designs,
-    size_t construct_length
+    const PipelineOptions& options
 ) {
     for (const CandidateSet& set : sets) {
         require_permutation(set.assignment, set.groups);
     }
-    verify_library(library, designs, construct_length);
+    verify_library(library, input_patterns(options), options.construct_length);
     progress() << "Verified " << library.constructs.size() << " constructs\n";
 }
 
@@ -401,7 +423,6 @@ void run_pipeline(const PipelineOptions& options) {
     Rng rng = make_rng(options.seed);
     Library library = load_library(options, rng);
     require_construct_lengths(library, options.construct_length);
-    std::vector<std::string> designs = design_sequences(library);
     std::vector<CandidateSet> sets = generate_candidates(library, options, rng);
     // Created after loading and generation, so a run that fails before this point leaves no
     // output directory.
@@ -413,7 +434,7 @@ void run_pipeline(const PipelineOptions& options) {
         assign_identity(sets);
     }
     fill_regions(library, sets);
-    verify_assembly(library, sets, designs, options.construct_length);
+    verify_assembly(library, sets, options);
     if (options.predict) {
         predict_final_reads(library, design_reads, sets, options);
     }

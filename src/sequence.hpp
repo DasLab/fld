@@ -30,4 +30,10 @@ std::string random_sequence(size_t length, Rng& rng);
 // Returns the Watson-Crick complement of a DNA base.
 char complement(char base);
 
+// Returns true if the IUPAC code denotes the base.
+bool code_allows(char code, char base);
+
+// Returns the IUPAC code that denotes the complements of the bases the code denotes.
+char complement_code(char code);
+
 #endif

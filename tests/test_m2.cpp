@@ -97,3 +97,12 @@ TEST_CASE("run_m2 rejects an empty name and a duplicate name") {
     write_fasta_file(input, {{"a x", "ACGT"}, {"a y", "ACGT"}});
     CHECK_THROWS_WITH(run_m2(input, output, false, false, rng), doctest::Contains("'a'"));
 }
+
+TEST_CASE("complement_mutant_patterns mirrors complement_mutants") {
+    FastaEntry entry{"seq", "ACGT"};
+    std::vector<std::string> patterns = complement_mutant_patterns("ACGT");
+    std::vector<FastaEntry> mutants = complement_mutants(entry);
+    REQUIRE(patterns.size() == mutants.size());
+    for (size_t i = 0; i < patterns.size(); i++) CHECK(patterns[i] == mutants[i].sequence);
+    CHECK(complement_mutant_patterns("AN") == std::vector<std::string>{"TN", "AN"});
+}

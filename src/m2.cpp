@@ -40,6 +40,16 @@ std::vector<FastaEntry> complement_mutants(const FastaEntry& entry) {
     return mutants;
 }
 
+std::vector<std::string> complement_mutant_patterns(const std::string& pattern) {
+    std::vector<std::string> patterns;
+    for (size_t i = 0; i < pattern.size(); i++) {
+        std::string mutant = pattern;
+        mutant[i] = complement_code(pattern[i]);
+        patterns.push_back(mutant);
+    }
+    return patterns;
+}
+
 std::vector<FastaEntry> all_mutants(const FastaEntry& entry) {
     std::vector<FastaEntry> mutants;
     for (size_t i = 0; i < entry.sequence.size(); i++) {

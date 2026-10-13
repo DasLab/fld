@@ -22,6 +22,12 @@ static std::vector<std::string> sample_designs() {
     return {"AAAA", "AAAAAA"};
 }
 
+TEST_CASE("verify_library matches designs against IUPAC patterns") {
+    CHECK_NOTHROW(verify_library(sample_library(), {"NNNN", "AAWAAR"}, 22));
+    CHECK_THROWS(verify_library(sample_library(), {"NNNN", "AAWAAY"}, 22));
+    CHECK_THROWS(verify_library(sample_library(), {"NNN", "AAAAAA"}, 22));
+}
+
 TEST_CASE("verify_library accepts a correct library") {
     CHECK_NOTHROW(verify_library(sample_library(), sample_designs(), 22));
 }

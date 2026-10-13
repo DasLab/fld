@@ -1,12 +1,14 @@
 #include "sequence.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <stdexcept>
 
 static const std::vector<char> DNA_BASES = {BASE_A, BASE_C, BASE_G, BASE_T};
 
-// Returns the DNA bases that an IUPAC code denotes, or null for any other character.
+// Returns the DNA bases that an IUPAC code denotes in alphabetical order, or null for any
+// other character.
 static const char* polybase_options(char code) {
     switch (code) {
         case 'A': return "A";
@@ -77,6 +79,34 @@ std::string random_sequence(size_t length, Rng& rng) {
         c = sample_element(DNA_BASES, rng);
     }
     return seq;
+}
+
+static const std::string IUPAC_CODES = "ACGTRYKMSWVDHBN";
+
+static std::string complement_options(const char* options) {
+    std::string complements;
+    for (const char* c = options; *c != '\0'; c++) {
+        complements += complement(*c);
+    }
+    std::sort(complements.begin(), complements.end());
+    return complements;
+}
+
+bool code_allows(char code, char base) {
+    const char* options = polybase_options(code);
+    return options != nullptr && std::strchr(options, base) != nullptr;
+}
+
+char complement_code(char code) {
+    const char* options = polybase_options(code);
+    if (options == nullptr) {
+        throw std::runtime_error("Cannot complement '" + std::string(1, code) + "'");
+    }
+    std::string complements = complement_options(options);
+    for (char candidate : IUPAC_CODES) {
+        if (polybase_options(candidate) == complements) return candidate;
+    }
+    throw std::logic_error("No IUPAC code denotes " + complements);
 }
 
 char complement(char base) {

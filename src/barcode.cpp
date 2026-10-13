@@ -7,26 +7,22 @@
 
 constexpr size_t MAX_BARCODE_ATTEMPTS = 100000;
 
-std::vector<std::string> hamming_ball(const std::string& seq) {
-    std::vector<std::string> ball = {seq};
+// Tries every single substitution of the sequence in place, without allocating a variant.
+static bool has_substitution_in(const std::string& seq, const std::unordered_set<std::string>& existing) {
+    std::string variant = seq;
     for (size_t i = 0; i < seq.size(); i++) {
         for (char base : dna_bases()) {
             if (base == seq[i]) continue;
-            std::string variant = seq;
             variant[i] = base;
-            ball.push_back(variant);
+            if (existing.count(variant) > 0) return true;
         }
+        variant[i] = seq[i];
     }
-    return ball;
+    return false;
 }
 
 bool has_hamming_neighbor(const std::string& seq, const std::unordered_set<std::string>& existing) {
-    for (const std::string& variant : hamming_ball(seq)) {
-        if (existing.count(variant) > 0) {
-            return true;
-        }
-    }
-    return false;
+    return existing.count(seq) > 0 || has_substitution_in(seq, existing);
 }
 
 using CountTable = std::vector<std::vector<size_t>>;

@@ -29,9 +29,17 @@ static void require_dna_bases(const Construct& construct) {
     }
 }
 
-static void require_design(const Layout& layout, const Construct& construct, const std::string& expected) {
+static bool matches_pattern(const std::string& design, const std::string& pattern) {
+    if (design.size() != pattern.size()) return false;
+    for (size_t i = 0; i < design.size(); i++) {
+        if (!code_allows(pattern[i], design[i])) return false;
+    }
+    return true;
+}
+
+static void require_design(const Layout& layout, const Construct& construct, const std::string& pattern) {
     const std::string& design = construct.regions[design_region(layout)];
-    if (design != expected) {
+    if (!matches_pattern(design, pattern)) {
         throw std::runtime_error(
             "Verification failed: the design of " + describe(construct) + " differs from its input");
     }
@@ -56,17 +64,17 @@ static void require_constants(const Layout& layout, const Construct& construct) 
 
 void verify_library(
     const Library& library,
-    const std::vector<std::string>& designs,
+    const std::vector<std::string>& patterns,
     size_t construct_length
 ) {
-    if (designs.size() != library.constructs.size()) {
+    if (patterns.size() != library.constructs.size()) {
         throw std::logic_error("Verification failed: the design count does not match the library");
     }
     for (size_t i = 0; i < library.constructs.size(); i++) {
         const Construct& construct = library.constructs[i];
         require_length(construct, construct_length);
         require_dna_bases(construct);
-        require_design(library.layout, construct, designs[i]);
+        require_design(library.layout, construct, patterns[i]);
         require_constants(library.layout, construct);
     }
 }

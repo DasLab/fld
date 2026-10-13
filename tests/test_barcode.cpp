@@ -10,10 +10,18 @@ static size_t hamming_distance(const std::string& a, const std::string& b) {
     return distance;
 }
 
-TEST_CASE("hamming_ball holds the sequence and every single substitution") {
-    std::vector<std::string> ball = hamming_ball("ACGT");
-    CHECK(ball.size() == 1 + 3 * 4);
-    CHECK(ball.front() == "ACGT");
+TEST_CASE("has_hamming_neighbor detects the sequence itself and every single substitution") {
+    std::unordered_set<std::string> existing = {"ACGT"};
+    CHECK(has_hamming_neighbor("ACGT", existing) == true);
+    for (size_t i = 0; i < 4; i++) {
+        for (char base : {'A', 'C', 'G', 'T'}) {
+            std::string variant = "ACGT";
+            variant[i] = base;
+            CHECK(has_hamming_neighbor(variant, existing) == true);
+        }
+    }
+    CHECK(has_hamming_neighbor("AAGG", existing) == false);
+    CHECK(has_hamming_neighbor("ACGTA", existing) == false);
 }
 
 TEST_CASE("has_hamming_neighbor detects transversions") {

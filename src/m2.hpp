@@ -11,6 +11,10 @@
 // base outside A, C, G, and T. The mutant suffix follows the first word of the header.
 std::vector<FastaEntry> complement_mutants(const FastaEntry& entry);
 
+// Returns the IUPAC pattern that each mutant of complement_mutants must match, in the same
+// order, given the pattern of the wild type.
+std::vector<std::string> complement_mutant_patterns(const std::string& pattern);
+
 // Returns three mutants per position, one for each other DNA base. Throws on a base outside
 // A, C, G, and T.
 std::vector<FastaEntry> all_mutants(const FastaEntry& entry);

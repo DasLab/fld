@@ -26,6 +26,27 @@ TEST_CASE("resolve_polybases replaces codes with bases they denote") {
     }
 }
 
+TEST_CASE("code_allows follows the IUPAC codes") {
+    CHECK(code_allows('A', 'A'));
+    CHECK_FALSE(code_allows('A', 'C'));
+    CHECK(code_allows('R', 'G'));
+    CHECK_FALSE(code_allows('R', 'C'));
+    CHECK(code_allows('N', 'T'));
+    CHECK_FALSE(code_allows('X', 'A'));
+}
+
+TEST_CASE("complement_code complements the bases a code denotes") {
+    CHECK(complement_code('A') == 'T');
+    CHECK(complement_code('R') == 'Y');
+    CHECK(complement_code('K') == 'M');
+    CHECK(complement_code('S') == 'S');
+    CHECK(complement_code('W') == 'W');
+    CHECK(complement_code('V') == 'B');
+    CHECK(complement_code('D') == 'H');
+    CHECK(complement_code('N') == 'N');
+    CHECK_THROWS(complement_code('X'));
+}
+
 TEST_CASE("complement pairs the DNA bases") {
     CHECK(complement('A') == 'T');
     CHECK(complement('T') == 'A');
