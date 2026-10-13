@@ -4,6 +4,8 @@ Fast library design for MaP-seq.
 
 `fld` places each design sequence into a construct with constant regions, hairpin padding, and hairpin barcodes. It can assign the padding and barcodes so that the predicted read counts are as even as possible.
 
+Designing one million random sequences of 1 to 130 bases into 200-base constructs with 5' padding and a 13 base pair barcode, without read prediction, takes 11 seconds and 1.2 GB of memory on an Apple M5 Pro.
+
 ## Installing
 
 Building `fld` needs a C++17 compiler and `make`.

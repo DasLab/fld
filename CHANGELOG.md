@@ -2,7 +2,7 @@
 
 ## [1.0.0] - 2026-10-13
 
-A rewrite with no dependencies. It builds with `make` and has three subcommands: `pipeline`, `barcodes`, and `m2`.
+A rewrite with no dependencies. It builds with `make` and has three subcommands: `pipeline`, `barcodes`, and `m2`. Designing one million sequences with barcodes and without prediction is about 20% faster.
 
 ### Changed
 
