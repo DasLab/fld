@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+extern const std::string PROGRAM_NAME;
+
 // Returns true for --help and -h.
 bool is_help_option(const std::string& arg);
 
@@ -75,6 +77,10 @@ private:
     void parse_option(const OptionSpec& spec, const std::vector<std::string>& args, size_t& i);
     void check_required() const;
     void check_positionals() const;
+    std::string usage_line() const;
+    size_t label_width() const;
+    std::string options_text() const;
+    std::string arguments_text() const;
 };
 
 #endif

@@ -18,7 +18,6 @@ static const std::string CONSTRUCT_LENGTH_OPTION = "--construct-length";
 static const std::string M2_OPTION = "--m2";
 static const std::string NO_PREDICT_OPTION = "--no-predict";
 static const std::string SORT_OPTION = "--sort";
-static const std::string SORT_DEFAULT = "none";
 static const std::string COUNT_OPTION = "--count";
 static const std::string LENGTH_OPTION = "--length";
 static const std::string ALL_OPTION = "--all";
@@ -82,7 +81,7 @@ static Command pipeline_command() {
     command.add_flag(OVERWRITE_OPTION, "Overwrite the files in an existing output directory");
     command.add_flag(M2_OPTION, "Add the complement mutants of each design as a sublibrary");
     command.add_flag(NO_PREDICT_OPTION, "Skip read prediction and assign padding and barcodes at random");
-    command.add_option(SORT_OPTION, "Order of the output: none, reads, or length", SORT_DEFAULT);
+    command.add_option(SORT_OPTION, "Order of the output: " + sort_order_names(), SORT_NONE);
     add_seed_option(command);
     add_padding_options(command);
     add_pair_options(command);
@@ -122,15 +121,19 @@ static Command barcodes_command() {
     return command;
 }
 
-int run_barcodes_command(const std::vector<std::string>& args) {
-    Command command = barcodes_command();
-    command.parse(args);
+static void write_random_barcodes(const Command& command) {
     std::string output = command.value(OUTPUT_OPTION);
     require_writable(output, command.flag(OVERWRITE_OPTION));
     Rng rng = make_rng(seed_from(command));
     std::vector<std::string> barcodes = random_barcodes(
         command.size_value(COUNT_OPTION), command.size_value(LENGTH_OPTION), pair_limits_from(command), rng);
     write_lines(output, barcodes);
+}
+
+int run_barcodes_command(const std::vector<std::string>& args) {
+    Command command = barcodes_command();
+    command.parse(args);
+    write_random_barcodes(command);
     return 0;
 }
 

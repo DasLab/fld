@@ -21,20 +21,26 @@
 
 static const std::string TMP_DIR = "tmp";
 static const std::string M2_SUFFIX = "_m2";
-static const std::string DESIGN_LABEL = "design";
 static const std::string LIBRARY_LABEL = "library";
 static const std::string READS_PREFIX = "reads_";
 static const std::string READS_COLUMN = "reads";
-static const std::string SORT_NONE = "none";
-static const std::string SORT_READS = "reads";
-static const std::string SORT_LENGTH = "length";
+const std::string SORT_NONE = "none";
+const std::string SORT_READS = "reads";
+const std::string SORT_LENGTH = "length";
+
+std::string sort_order_names() {
+    return SORT_NONE + ", " + SORT_READS + ", or " + SORT_LENGTH;
+}
 
 SortOrder parse_sort_order(const std::string& text) {
     if (text == SORT_NONE) return SortOrder::None;
     if (text == SORT_READS) return SortOrder::Reads;
     if (text == SORT_LENGTH) return SortOrder::Length;
-    throw std::runtime_error(
-        "Unknown sort order '" + text + "'. Expected " + SORT_NONE + ", " + SORT_READS + ", or " + SORT_LENGTH);
+    throw std::runtime_error("Unknown sort order '" + text + "'. Expected " + sort_order_names());
+}
+
+static std::string design_label(const Layout& layout) {
+    return slot_names(layout)[design_slot(layout)];
 }
 
 // A pool of generated sequences for one variable slot, with one entry per construct.
@@ -88,7 +94,7 @@ static void require_distinct_sublibraries(const PipelineOptions& options) {
     }
 }
 
-static void validate_options(const PipelineOptions& options) {
+static void validate_inputs(const PipelineOptions& options) {
     if (options.inputs.empty()) {
         throw std::runtime_error("At least one input FASTA file is required");
     }
@@ -96,18 +102,30 @@ static void validate_options(const PipelineOptions& options) {
         require_file(input);
     }
     require_distinct_sublibraries(options);
+}
+
+static void validate_stem_options(const PipelineOptions& options) {
     if (has_padding_slot(options.layout)) {
         validate_stem_limits(options.stem);
     }
     for (size_t slot : barcode_slots(options.layout)) {
         validate_stem_length(options.layout.slots[slot].stem_length, options.stem);
     }
+}
+
+static void validate_prediction_options(const PipelineOptions& options) {
     if (options.sort == SortOrder::Reads && !options.predict) {
         throw std::runtime_error("--sort reads needs predicted reads, which --no-predict skips");
     }
     if (options.predict && !rn_coverage_on_path()) {
         throw std::runtime_error("rn-coverage is not on PATH. Install it, or pass --no-predict.");
     }
+}
+
+static void validate_options(const PipelineOptions& options) {
+    validate_inputs(options);
+    validate_stem_options(options);
+    validate_prediction_options(options);
     require_writable(options.output_dir, options.overwrite);
 }
 
@@ -281,7 +299,7 @@ static std::vector<double> assign_by_prediction(
     std::vector<ComponentSet>& sets,
     const std::string& work_dir
 ) {
-    std::vector<double> design_reads = predict_reads(design_sequences(library), work_dir, DESIGN_LABEL);
+    std::vector<double> design_reads = predict_reads(design_sequences(library), work_dir, design_label(library.layout));
     for (ComponentSet& set : sets) {
         set.reads = predict_reads(set.sequences, work_dir, set.label);
     }
@@ -319,7 +337,7 @@ static void attach_reads(
     const std::vector<ComponentSet>& sets,
     const std::vector<double>& final_reads
 ) {
-    library.read_columns = {READS_PREFIX + DESIGN_LABEL};
+    library.read_columns = {READS_PREFIX + design_label(library.layout)};
     for (const ComponentSet& set : sets) {
         library.read_columns.push_back(READS_PREFIX + set.label);
     }

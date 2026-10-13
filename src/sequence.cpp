@@ -89,21 +89,3 @@ char complement(char base) {
             throw std::runtime_error("Cannot complement '" + std::string(1, base) + "'");
     }
 }
-
-std::string to_dna(const std::string& seq) {
-    std::string result = seq;
-    for (char& c : result) {
-        if (c == 'U') c = 'T';
-        if (c == 'u') c = 't';
-    }
-    return result;
-}
-
-std::string to_rna(const std::string& seq) {
-    std::string result = seq;
-    for (char& c : result) {
-        if (c == 'T') c = 'U';
-        if (c == 't') c = 'u';
-    }
-    return result;
-}

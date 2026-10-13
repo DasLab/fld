@@ -1,8 +1,10 @@
 #include "cli.hpp"
 
+#include <algorithm>
+
 #include "text.hpp"
 
-static const std::string PROGRAM_NAME = "fld";
+const std::string PROGRAM_NAME = "fld";
 static const std::string HELP_LONG = "--help";
 static const std::string HELP_SHORT = "-h";
 
@@ -176,21 +178,37 @@ static std::string padded(const std::string& text, size_t width) {
     return text + std::string(width > text.size() ? width - text.size() : 0, ' ');
 }
 
-std::string Command::usage() const {
+std::string Command::usage_line() const {
     std::string text = "Usage: " + PROGRAM_NAME + " " + _name + " [options]";
     if (!_positional_name.empty()) {
         text += " <" + _positional_name + ">...";
     }
-    text += "\n\n" + _description + "\n\nOptions:\n";
+    return text + "\n";
+}
+
+size_t Command::label_width() const {
     size_t width = 0;
     for (const OptionSpec& spec : _specs) {
         width = std::max(width, option_label(spec).size());
     }
+    return width + 2;
+}
+
+std::string Command::options_text() const {
+    std::string text = "Options:\n";
     for (const OptionSpec& spec : _specs) {
-        text += "  " + padded(option_label(spec), width + 2) + option_help(spec) + "\n";
-    }
-    if (!_positional_name.empty()) {
-        text += "\nArguments:\n  " + padded("<" + _positional_name + ">", width + 2) + _positional_help + "\n";
+        text += "  " + padded(option_label(spec), label_width()) + option_help(spec) + "\n";
     }
     return text;
+}
+
+std::string Command::arguments_text() const {
+    if (_positional_name.empty()) {
+        return "";
+    }
+    return "\nArguments:\n  " + padded("<" + _positional_name + ">", label_width()) + _positional_help + "\n";
+}
+
+std::string Command::usage() const {
+    return usage_line() + "\n" + _description + "\n\n" + options_text() + arguments_text();
 }

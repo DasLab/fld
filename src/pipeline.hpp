@@ -11,8 +11,15 @@
 // The order of the constructs in the output.
 enum class SortOrder { None, Reads, Length };
 
-// Parses "none", "reads", or "length".
+extern const std::string SORT_NONE;
+extern const std::string SORT_READS;
+extern const std::string SORT_LENGTH;
+
+// Parses one of the three sort names.
 SortOrder parse_sort_order(const std::string& text);
+
+// Returns the three sort names as "none, reads, or length".
+std::string sort_order_names();
 
 struct PipelineOptions {
     std::vector<std::string> inputs;

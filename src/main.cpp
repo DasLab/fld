@@ -7,7 +7,6 @@
 #include "commands.hpp"
 #include "version.hpp"
 
-static const std::string PROGRAM_NAME = "fld";
 static const std::string VERSION_OPTION = "--version";
 
 static std::string top_usage() {

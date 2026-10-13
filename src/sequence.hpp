@@ -30,7 +30,4 @@ std::string random_sequence(size_t length, Rng& rng);
 // Returns the Watson-Crick complement of a DNA base.
 char complement(char base);
 
-std::string to_dna(const std::string& seq);
-std::string to_rna(const std::string& seq);
-
 #endif

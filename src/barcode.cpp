@@ -5,13 +5,12 @@
 
 #include "sequence.hpp"
 
-static const std::string SUBSTITUTION_BASES = "ACGT";
 constexpr size_t MAX_BARCODE_ATTEMPTS = 100000;
 
 std::vector<std::string> hamming_ball(const std::string& seq) {
     std::vector<std::string> ball = {seq};
     for (size_t i = 0; i < seq.size(); i++) {
-        for (char base : SUBSTITUTION_BASES) {
+        for (char base : dna_bases()) {
             if (base == seq[i]) continue;
             std::string variant = seq;
             variant[i] = base;

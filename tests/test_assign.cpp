@@ -35,8 +35,9 @@ TEST_CASE("anti_sorted_assignment pairs low with high") {
     std::vector<double> pool = {10, 30, 20};
     std::vector<size_t> assignment = anti_sorted_assignment(partial, pool, single_group(3));
     CHECK(assignment == std::vector<size_t>{0, 1, 2});
-    std::vector<double> sums = {13, 31, 22};
-    CHECK(variance(sums) > 0);
+    std::vector<double> paired = {partial[0] + pool[assignment[0]], partial[1] + pool[assignment[1]], partial[2] + pool[assignment[2]]};
+    std::vector<double> sorted_pairing = {3 + 30, 1 + 10, 2 + 20};
+    CHECK(variance(paired) < variance(sorted_pairing));
 }
 
 TEST_CASE("anti_sorted_assignment stays within groups") {
