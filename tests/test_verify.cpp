@@ -10,10 +10,10 @@ static Library sample_library() {
     Construct a;
     a.name = "a";
     a.sublibrary = "s";
-    a.parts = {"GG", "ACGTTTCGACGT", "AAAA", "TT", "CC"};
+    a.regions = {"GG", "ACGTTTCGACGT", "AAAA", "TT", "CC"};
     Construct b = a;
     b.name = "b";
-    b.parts = {"GG", "TGCATTCGTGCA", "AAAAAA", "", "CC"};
+    b.regions = {"GG", "TGCATTCGTGCA", "AAAAAA", "", "CC"};
     library.constructs = {a, b};
     return library;
 }
@@ -29,26 +29,26 @@ TEST_CASE("verify_library accepts a correct library") {
 TEST_CASE("verify_library rejects a wrong construct length") {
     CHECK_THROWS(verify_library(sample_library(), sample_designs(), 23));
     Library library = sample_library();
-    library.constructs[1].parts[3] = "T";
+    library.constructs[1].regions[3] = "T";
     CHECK_THROWS(verify_library(library, sample_designs(), 22));
 }
 
 TEST_CASE("verify_library rejects bases outside ACGT") {
     Library library = sample_library();
-    library.constructs[0].parts[3] = "TN";
+    library.constructs[0].regions[3] = "TN";
     CHECK_THROWS(verify_library(library, sample_designs(), 22));
 }
 
 TEST_CASE("verify_library rejects a design that differs from its input") {
     Library library = sample_library();
-    library.constructs[0].parts[2] = "AAAC";
+    library.constructs[0].regions[2] = "AAAC";
     CHECK_THROWS(verify_library(library, sample_designs(), 22));
     CHECK_THROWS(verify_library(sample_library(), {"AAAA", "AAAAAC"}, 22));
 }
 
 TEST_CASE("verify_library rejects a changed constant region") {
     Library library = sample_library();
-    library.constructs[1].parts[4] = "CG";
+    library.constructs[1].regions[4] = "CG";
     CHECK_THROWS(verify_library(library, sample_designs(), 22));
 }
 

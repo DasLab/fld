@@ -47,14 +47,31 @@ void Command::add_flag(const std::string& name, const std::string& help) {
     _specs.push_back(spec);
 }
 
+void Command::add_short_name(const std::string& name, const std::string& short_name) {
+    for (OptionSpec& spec : _specs) {
+        if (spec.name == name) {
+            spec.short_name = short_name;
+            return;
+        }
+    }
+    throw std::logic_error("Unknown option " + name);
+}
+
+void Command::add_positional(const std::string& name, const std::string& help) {
+    _positional_name = name;
+    _positional_help = help;
+    _single_positional = true;
+}
+
 void Command::add_positionals(const std::string& name, const std::string& help) {
     _positional_name = name;
     _positional_help = help;
+    _single_positional = false;
 }
 
 const OptionSpec* Command::find_spec(const std::string& name) const {
     for (const OptionSpec& spec : _specs) {
-        if (spec.name == name) return &spec;
+        if (spec.name == name || (!spec.short_name.empty() && spec.short_name == name)) return &spec;
     }
     return nullptr;
 }
@@ -67,20 +84,35 @@ const OptionSpec& Command::spec(const std::string& name) const {
     return *found;
 }
 
+static bool looks_like_option(const std::string& arg) {
+    return arg.size() > 1 && arg[0] == '-';
+}
+
+void Command::require_unseen(const OptionSpec& spec) const {
+    if (_flags.count(spec.name) > 0 || _values.count(spec.name) > 0) {
+        throw std::runtime_error("Option " + spec.name + " was given more than once");
+    }
+}
+
+// Returns the value that follows the option, which must not itself be an option.
+std::string Command::option_value(const OptionSpec& spec, const std::vector<std::string>& args, size_t i) const {
+    if (i >= args.size()) {
+        throw std::runtime_error("Option " + spec.name + " needs a value");
+    }
+    if (is_help_option(args[i]) || find_spec(args[i]) != nullptr) {
+        throw std::runtime_error("Option " + spec.name + " needs a value, but got " + args[i]);
+    }
+    return args[i];
+}
+
 void Command::parse_option(const OptionSpec& spec, const std::vector<std::string>& args, size_t& i) {
+    require_unseen(spec);
     if (spec.is_flag) {
         _flags.insert(spec.name);
         return;
     }
-    if (i + 1 >= args.size()) {
-        throw std::runtime_error("Option " + spec.name + " needs a value");
-    }
     i++;
-    _values[spec.name] = args[i];
-}
-
-static bool looks_like_option(const std::string& arg) {
-    return arg.size() > 1 && arg[0] == '-';
+    _values[spec.name] = option_value(spec, args, i);
 }
 
 void Command::parse(const std::vector<std::string>& args) {
@@ -115,8 +147,18 @@ void Command::check_positionals() const {
         throw std::runtime_error("Unexpected argument '" + _positionals.front() + "'");
     }
     if (!_positional_name.empty() && _positionals.empty()) {
-        throw std::runtime_error("Expected at least one " + _positional_name);
+        throw std::runtime_error(std::string("Expected ") + (_single_positional ? "one " : "at least one ") + _positional_name);
     }
+    if (_single_positional && _positionals.size() > 1) {
+        throw std::runtime_error("Expected one " + _positional_name + ", got " + std::to_string(_positionals.size()));
+    }
+}
+
+std::string Command::positional() const {
+    if (!_single_positional) {
+        throw std::logic_error("The command takes more than one " + _positional_name);
+    }
+    return _positionals.front();
 }
 
 bool Command::has(const std::string& name) const {
@@ -160,8 +202,12 @@ const std::vector<std::string>& Command::positionals() const {
     return _positionals;
 }
 
+static std::string option_names(const OptionSpec& spec) {
+    return spec.short_name.empty() ? spec.name : spec.short_name + ", " + spec.name;
+}
+
 static std::string option_label(const OptionSpec& spec) {
-    return spec.is_flag ? spec.name : spec.name + " <value>";
+    return spec.is_flag ? option_names(spec) : option_names(spec) + " <value>";
 }
 
 static std::string option_help(const OptionSpec& spec) {
@@ -181,7 +227,7 @@ static std::string padded(const std::string& text, size_t width) {
 std::string Command::usage_line() const {
     std::string text = "Usage: " + PROGRAM_NAME + " " + _name + " [options]";
     if (!_positional_name.empty()) {
-        text += " <" + _positional_name + ">...";
+        text += " <" + _positional_name + ">" + (_single_positional ? "" : "...");
     }
     return text + "\n";
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -8,6 +9,7 @@
 #include "version.hpp"
 
 static const std::string VERSION_OPTION = "--version";
+static const std::string OUT_OF_MEMORY = "Not enough memory. An argument is probably too large.";
 
 static std::string top_usage() {
     return "Usage: " + PROGRAM_NAME + " <command> [options]\n\n"
@@ -16,6 +18,11 @@ static std::string top_usage() {
            "  " + BARCODES_COMMAND + "   Write a set of hairpin barcodes\n"
            "  " + M2_COMMAND + "         Write the single mutants of each sequence\n\n"
            "Run '" + PROGRAM_NAME + " <command> --help' for the options of a command.\n";
+}
+
+static int fail(const std::string& message) {
+    std::cerr << "Error: " << message << "\n";
+    return 1;
 }
 
 static int dispatch(const std::string& name, const std::vector<std::string>& args) {
@@ -41,8 +48,11 @@ int main(int argc, char** argv) {
     } catch (const HelpRequested& help) {
         std::cout << help.what();
         return 0;
+    } catch (const std::bad_alloc&) {
+        return fail(OUT_OF_MEMORY);
+    } catch (const std::length_error&) {
+        return fail(OUT_OF_MEMORY);
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
+        return fail(e.what());
     }
 }

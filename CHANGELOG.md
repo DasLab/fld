@@ -1,21 +1,28 @@
 # Changelog
 
-## [1.0.0] - 2026-10-12
+## [1.0.0] - 2026-10-13
 
-`fld` 1.0.0 is a rewrite in C++17 with no dependencies. It builds with `make` and has three subcommands: `pipeline`, `barcodes`, and `m2`.
+A rewrite with no dependencies. It builds with `make` and has three subcommands: `pipeline`, `barcodes`, and `m2`.
 
 ### Changed
 
-- The construct is described by `--layout`, a list of slots from 5' to 3': any number of `const:SEQ` and `barcode:N` slots, one `design`, and at most one `padding`, in any order. `--construct-length` replaces `--pad-to` and gives the total length of every construct. The 5' and 3' constant regions no longer have defaults.
-- Read prediction runs by default. `--no-predict` skips it. Padding and barcodes are assigned in one step that minimizes the variance of the summed predicted reads, instead of the two rounds of pairing.
-- `library.csv` has one column per slot, named `const_1`, `barcode_1`, `design`, `padding`, and so on, followed by the predicted reads of each component and of the full construct. `index` is 0-based.
-- `begin` and `end` moved from the CSV to the FASTA header, as `sublibrary=X begin=B end=E`, with the Python convention: `begin` is 0-based and `end` is exclusive.
-- `--sort none|reads|length` replaces `--sort-by-reads`.
-- `--closing-gc` is renamed to `--terminal-gc`.
-- `--seed` makes a run reproducible. `fld barcodes` and `fld m2` take it too.
-- Input is uppercased and `U` is converted to `T`. Carriage returns are stripped. Any other character outside the IUPAC codes stops the run with the entry name, instead of being replaced with a random base.
-- `fld m2` normalizes its input the same way as the pipeline: uppercase DNA with every IUPAC code replaced. Mutant names are inserted after the first word of the header.
-- Every library is verified before it is written: construct lengths, bases, the design at `begin:end`, the constant regions, and that each padding and barcode is used exactly once.
+- Every construct followed one fixed template. `--construct-template` now lists its regions from 5' to 3'.
+- `--pad-to` gave the padded design length. `--construct-length` now gives the total construct length.
+- The constant regions had defaults. They are now given in `--construct-template`.
+- Prediction ran only with `--predict`. It now runs by default, and `--no-predict` skips it.
+- Padding and barcodes were assigned in two rounds. They are now assigned in one step that minimizes the variance of the summed predicted reads.
+- `library.csv` had columns for the six fixed regions. It now has one column per region of the template, plus the predicted reads of each region and of the full construct.
+- `index` was 1-based. It is now 0-based.
+- `begin` and `end` were 1-based inclusive CSV columns. They are now 0-based exclusive fields in the FASTA header, with `sublibrary`.
+- `--max-gc` defaulted to 5. It now defaults to `unlimited`.
+- `--sort-by-reads` sorted by reads. `--sort none|reads|length` now chooses the order.
+- `-o` was the only name of the output option. `--output` is now its long name.
+- `--closing-gc` is renamed to `--terminal-gc`. `--min-stem-length` and `--max-stem-length` are renamed to `--min-stem` and `--max-stem`.
+- Runs were seeded from the clock. They are now seeded from the operating system, or from `--seed`, which makes a run reproducible.
+- A character outside the IUPAC codes was replaced with a random base. It now stops the run with the entry name.
+- Lowercase and RNA input was passed through. It is now uppercased, with `U` converted to `T`.
+- The first word of a FASTA header could be empty or repeated. It must now be non-empty and distinct across all input files.
+- Output was not checked against the input. Every library is now verified before it is written.
 
 ### Removed
 
@@ -24,11 +31,13 @@
 
 ### Fixed
 
-- Barcodes could be at Hamming distance 1, because the neighbor check only tried transitions and so missed the one-base difference between the loops `TTCG` and `TACG`. The check now covers every single substitution.
-- `--m2` included each design twice.
-- The mutants of a design with IUPAC codes were not single mutants of its wild type, because the codes were replaced separately for each mutant.
-- `--max-gc 0` and a closing GC count larger than the stem crashed. The pair limits are now validated.
-- Negative integer arguments were accepted and hung the run.
-- `--overwrite` removed the output directory before the inputs were checked. A failed run now leaves no output directory.
-- Input files with the same name in different directories overwrote each other's intermediate files. Duplicate sublibrary names are now rejected, including a name that collides with the `_m2` sublibrary of another input.
-- Paths with spaces broke the `rn-coverage` commands.
+- Barcodes could be at Hamming distance 1, because the neighbor check missed the loops `TTCG` and `TACG`. The check now covers every single substitution.
+- `--m2` included each design twice. It now includes each design once.
+- A design with IUPAC codes had its codes replaced with random bases separately in each mutant, so the mutants differed from the wild type at more than one position. The codes are now replaced once, before the mutants are made.
+- A closing GC count larger than the stem or than `--max-gc` crashed. The pair limits are now checked against each other.
+- A negative integer argument hung the run. It is now rejected.
+- `--overwrite` removed the output directory before the inputs were checked. The directory is now created after the inputs are checked, so an early failure leaves no output directory.
+- Two input files with the same name in different directories overwrote each other's intermediate files. They are now rejected.
+- A path with a space broke the `rn-coverage` commands. Paths are now quoted.
+- A repeated option kept the last value. It is now rejected.
+- `-o --overwrite` wrote the library to a directory named `--overwrite`. An option that is given another option as its value is now rejected.

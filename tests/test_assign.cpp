@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <numeric>
 
-static std::vector<double> totals(const std::vector<double>& base, const std::vector<ComponentPool>& pools,
+static std::vector<double> totals(const std::vector<double>& base, const std::vector<CandidatePool>& pools,
                                   const std::vector<std::vector<size_t>>& assignments) {
     std::vector<double> result = base;
     for (size_t k = 0; k < pools.size(); k++) {
@@ -54,7 +54,7 @@ TEST_CASE("anti_sorted_assignment stays within groups") {
 
 TEST_CASE("minimize_variance with one pool is the anti-sorted assignment") {
     std::vector<double> base = {5, 1, 3, 2, 4};
-    ComponentPool pool{{1, 2, 3, 4, 5}, single_group(5)};
+    CandidatePool pool{{1, 2, 3, 4, 5}, single_group(5)};
     std::vector<std::vector<size_t>> assignments = minimize_variance(base, {pool});
     std::vector<double> sums = totals(base, {pool}, assignments);
     for (double s : sums) CHECK(s == doctest::Approx(6));
@@ -66,11 +66,11 @@ TEST_CASE("minimize_variance with several pools does not exceed the sequential v
     size_t n = 200;
     std::vector<double> base(n);
     for (double& v : base) v = dist(rng);
-    std::vector<ComponentPool> pools;
+    std::vector<CandidatePool> pools;
     std::vector<size_t> keys(n);
     for (size_t i = 0; i < n; i++) keys[i] = i % 3;
     for (int k = 0; k < 3; k++) {
-        ComponentPool pool;
+        CandidatePool pool;
         pool.reads.resize(n);
         for (double& v : pool.reads) v = dist(rng);
         pool.groups = k == 0 ? groups_by_key(keys) : single_group(n);

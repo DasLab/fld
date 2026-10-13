@@ -16,6 +16,7 @@ static PipelineOptions base_options(const TempDir& dir, const std::string& layou
     options.layout = parse_layout(layout);
     options.construct_length = 200;
     options.seed = 42;
+    options.stem = test_limits();
     options.predict = false;
     return options;
 }
@@ -27,11 +28,11 @@ static void check_outputs(const TempDir& dir, const PipelineOptions& options, si
     REQUIRE(fasta.size() == count);
     const std::vector<std::string>& header = rows[0];
     size_t design_col = column_index(header, "design");
-    size_t slot_count = options.layout.slots.size();
+    size_t region_count = options.layout.regions.size();
     for (size_t r = 1; r < rows.size(); r++) {
         const std::vector<std::string>& row = rows[r];
         std::string seq;
-        for (size_t c = 3; c < 3 + slot_count; c++) seq += row[c];
+        for (size_t c = 3; c < 3 + region_count; c++) seq += row[c];
         CHECK(seq == fasta[r - 1].sequence);
         CHECK(seq.size() == options.construct_length);
         std::string expected_name = row[1] + " sublibrary=" + row[2] + " begin=";
@@ -42,7 +43,7 @@ static void check_outputs(const TempDir& dir, const PipelineOptions& options, si
     }
 }
 
-TEST_CASE("pipeline fills every slot and keeps the construct length") {
+TEST_CASE("pipeline fills every region and keeps the construct length") {
     TempDir dir;
     write_fasta_file(dir.file("in.fasta"), {
         {"one", "ACGTACGTACGTACGTACGT"},
@@ -302,4 +303,14 @@ TEST_CASE("pipeline predicts and assigns with rn-coverage" * doctest::skip(!rn_c
         CHECK(std::isfinite(std::stod(rows[r][column_index(header, "reads_design")])));
     }
     CHECK(std::filesystem::exists(dir.file("out/tmp/library_80_reads.txt")));
+}
+
+TEST_CASE("pipeline rejects the same name in two input files") {
+    TempDir dir;
+    write_fasta_file(dir.file("a.fasta"), {{"one", "ACGT"}});
+    write_fasta_file(dir.file("b.fasta"), {{"one", "ACGT"}});
+    PipelineOptions options = base_options(dir, "padding,design");
+    options.inputs = {dir.file("a.fasta"), dir.file("b.fasta")};
+    CHECK_THROWS_WITH(run_pipeline(options), doctest::Contains("'one'"));
+    CHECK_FALSE(std::filesystem::exists(dir.file("out")));
 }

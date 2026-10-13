@@ -30,7 +30,7 @@ static void require_dna_bases(const Construct& construct) {
 }
 
 static void require_design(const Layout& layout, const Construct& construct, const std::string& expected) {
-    const std::string& design = construct.parts[design_slot(layout)];
+    const std::string& design = construct.regions[design_region(layout)];
     if (design != expected) {
         throw std::runtime_error(
             "Verification failed: the design of " + describe(construct) + " differs from its input");
@@ -44,11 +44,11 @@ static void require_design(const Layout& layout, const Construct& construct, con
 }
 
 static void require_constants(const Layout& layout, const Construct& construct) {
-    for (size_t i = 0; i < layout.slots.size(); i++) {
-        if (layout.slots[i].kind != SlotKind::Constant) continue;
-        if (construct.parts[i] != layout.slots[i].constant) {
+    for (size_t i = 0; i < layout.regions.size(); i++) {
+        if (layout.regions[i].kind != RegionKind::Constant) continue;
+        if (construct.regions[i] != layout.regions[i].constant) {
             throw std::runtime_error(
-                "Verification failed: constant slot " + slot_names(layout)[i] + " of " +
+                "Verification failed: constant region " + region_names(layout)[i] + " of " +
                 describe(construct) + " does not match the layout");
         }
     }
@@ -76,15 +76,15 @@ void require_permutation(const std::vector<size_t>& assignment, const Groups& gr
     for (const std::vector<size_t>& group : groups) {
         std::unordered_set<size_t> members(group.begin(), group.end());
         for (size_t i : group) {
-            size_t component = assignment[i];
-            if (component >= used.size() || used[component] || members.count(component) == 0) {
-                throw std::logic_error("Verification failed: a component is reused, missing, or outside its group");
+            size_t candidate = assignment[i];
+            if (candidate >= used.size() || used[candidate] || members.count(candidate) == 0) {
+                throw std::logic_error("Verification failed: a candidate is reused, missing, or outside its group");
             }
-            used[component] = true;
+            used[candidate] = true;
         }
     }
     if (std::count(used.begin(), used.end(), false) > 0) {
-        throw std::logic_error("Verification failed: a component is not assigned");
+        throw std::logic_error("Verification failed: a candidate is not assigned");
     }
 }
 

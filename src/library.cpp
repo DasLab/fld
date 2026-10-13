@@ -15,20 +15,20 @@ static const std::string END_FIELD = "end";
 
 std::string full_sequence(const Construct& construct) {
     std::string seq;
-    for (const std::string& part : construct.parts) {
-        seq += part;
+    for (const std::string& region : construct.regions) {
+        seq += region;
     }
     return seq;
 }
 
 size_t design_length(const Layout& layout, const Construct& construct) {
-    return construct.parts[design_slot(layout)].size();
+    return construct.regions[design_region(layout)].size();
 }
 
 size_t design_begin(const Layout& layout, const Construct& construct) {
     size_t offset = 0;
-    for (size_t i = 0; i < design_slot(layout); i++) {
-        offset += construct.parts[i].size();
+    for (size_t i = 0; i < design_region(layout); i++) {
+        offset += construct.regions[i].size();
     }
     return offset;
 }
@@ -61,7 +61,7 @@ std::string fasta_name(const Layout& layout, const Construct& construct) {
 
 std::vector<std::string> csv_header(const Library& library) {
     std::vector<std::string> header = {INDEX_COLUMN, NAME_COLUMN, SUBLIBRARY_COLUMN};
-    for (const std::string& name : slot_names(library.layout)) {
+    for (const std::string& name : region_names(library.layout)) {
         header.push_back(name);
     }
     for (const std::string& name : library.read_columns) {
@@ -74,8 +74,8 @@ std::vector<std::string> csv_row(const Construct& construct) {
     std::vector<std::string> row = {
         std::to_string(construct.index), construct.name, construct.sublibrary
     };
-    for (const std::string& part : construct.parts) {
-        row.push_back(part);
+    for (const std::string& region : construct.regions) {
+        row.push_back(region);
     }
     for (double reads : construct.reads) {
         row.push_back(std::to_string(reads));

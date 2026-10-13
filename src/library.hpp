@@ -7,12 +7,12 @@
 
 #include "layout.hpp"
 
-// One construct. The parts align with the slots of the layout.
+// One construct. It holds one sequence per region of the layout.
 struct Construct {
     size_t index = 0;
     std::string name;
     std::string sublibrary;
-    std::vector<std::string> parts;
+    std::vector<std::string> regions;
     std::vector<double> reads;
 };
 
@@ -32,7 +32,7 @@ size_t design_begin(const Layout& layout, const Construct& construct);
 size_t design_end(const Layout& layout, const Construct& construct);
 
 // Computes the padding length that brings the construct to the given total length. Throws
-// when the other slots alone exceed that length.
+// when the other regions alone exceed that length.
 size_t padding_length(const Layout& layout, const Construct& construct, size_t construct_length);
 
 // Builds the FASTA header: the name, then sublibrary, begin, and end as key=value fields.

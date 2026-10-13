@@ -2,7 +2,7 @@
 
 ## Building
 
-`make` builds `bin/fld`. `make install PREFIX=<dir>` copies it to `<dir>/bin`.
+`make` builds `bin/fld`. `make install` copies it to `~/.local/bin`, or to `<dir>/bin` with `PREFIX=<dir>`.
 
 ## Tests
 

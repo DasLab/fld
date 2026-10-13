@@ -10,10 +10,11 @@
 #include "stem.hpp"
 #include "text.hpp"
 
-static const std::string OUTPUT_OPTION = "-o";
+static const std::string OUTPUT_OPTION = "--output";
+static const std::string OUTPUT_SHORT_OPTION = "-o";
 static const std::string OVERWRITE_OPTION = "--overwrite";
 static const std::string SEED_OPTION = "--seed";
-static const std::string LAYOUT_OPTION = "--layout";
+static const std::string CONSTRUCT_TEMPLATE_OPTION = "--construct-template";
 static const std::string CONSTRUCT_LENGTH_OPTION = "--construct-length";
 static const std::string M2_OPTION = "--m2";
 static const std::string NO_PREDICT_OPTION = "--no-predict";
@@ -28,6 +29,11 @@ static const std::string MAX_AU_OPTION = "--max-au";
 static const std::string MAX_GC_OPTION = "--max-gc";
 static const std::string MAX_GU_OPTION = "--max-gu";
 static const std::string TERMINAL_GC_OPTION = "--terminal-gc";
+
+static void add_output_option(Command& command, const std::string& help) {
+    command.add_option(OUTPUT_OPTION, help);
+    command.add_short_name(OUTPUT_OPTION, OUTPUT_SHORT_OPTION);
+}
 
 static void add_pair_options(Command& command) {
     StemLimits defaults;
@@ -75,9 +81,9 @@ static std::optional<size_t> seed_from(const Command& command) {
 static Command pipeline_command() {
     Command command(PIPELINE_COMMAND, "Designs a library from FASTA files of design sequences.");
     command.add_positionals("fasta", "Input FASTA files. Each file becomes one sublibrary.");
-    command.add_option(OUTPUT_OPTION, "Output directory");
+    add_output_option(command, "Output directory");
     command.add_option(CONSTRUCT_LENGTH_OPTION, "Total length of every construct");
-    command.add_option(LAYOUT_OPTION, "Slots of the construct from 5' to 3'");
+    command.add_option(CONSTRUCT_TEMPLATE_OPTION, "Regions of the construct from 5' to 3'");
     command.add_flag(OVERWRITE_OPTION, "Overwrite the files in an existing output directory");
     command.add_flag(M2_OPTION, "Add the complement mutants of each design as a sublibrary");
     command.add_flag(NO_PREDICT_OPTION, "Skip read prediction and assign padding and barcodes at random");
@@ -93,7 +99,7 @@ static PipelineOptions pipeline_options_from(const Command& command) {
     options.inputs = command.positionals();
     options.output_dir = command.value(OUTPUT_OPTION);
     options.overwrite = command.flag(OVERWRITE_OPTION);
-    options.layout = parse_layout(command.value(LAYOUT_OPTION));
+    options.layout = parse_layout(command.value(CONSTRUCT_TEMPLATE_OPTION));
     options.construct_length = command.size_value(CONSTRUCT_LENGTH_OPTION);
     options.stem = stem_limits_from(command);
     options.m2 = command.flag(M2_OPTION);
@@ -114,7 +120,7 @@ static Command barcodes_command() {
     Command command(BARCODES_COMMAND, "Writes hairpin barcodes, one per line, at pairwise Hamming distance two or more.");
     command.add_option(COUNT_OPTION, "Number of barcodes");
     command.add_option(LENGTH_OPTION, "Stem length of each barcode");
-    command.add_option(OUTPUT_OPTION, "Output file");
+    add_output_option(command, "Output file");
     command.add_flag(OVERWRITE_OPTION, "Overwrite an existing output file");
     add_seed_option(command);
     add_pair_options(command);
@@ -139,26 +145,19 @@ int run_barcodes_command(const std::vector<std::string>& args) {
 
 static Command m2_command() {
     Command command(M2_COMMAND, "Writes the wild type and the single mutants of every sequence in a FASTA file.");
-    command.add_positionals("fasta", "Input FASTA file");
-    command.add_option(OUTPUT_OPTION, "Output FASTA file");
+    command.add_positional("fasta", "Input FASTA file");
+    add_output_option(command, "Output FASTA file");
     command.add_flag(ALL_OPTION, "Write all three mutants per position instead of the complement only");
     command.add_flag(OVERWRITE_OPTION, "Overwrite an existing output file");
     add_seed_option(command);
     return command;
 }
 
-static std::string single_input(const Command& command) {
-    if (command.positionals().size() != 1) {
-        throw std::runtime_error("Expected exactly one input FASTA file");
-    }
-    return command.positionals().front();
-}
-
 int run_m2_command(const std::vector<std::string>& args) {
     Command command = m2_command();
     command.parse(args);
     Rng rng = make_rng(seed_from(command));
-    run_m2(single_input(command), command.value(OUTPUT_OPTION),
+    run_m2(command.positional(), command.value(OUTPUT_OPTION),
            command.flag(ALL_OPTION), command.flag(OVERWRITE_OPTION), rng);
     return 0;
 }

@@ -7,32 +7,32 @@
 
 #include "padding.hpp"
 
-enum class SlotKind { Constant, Barcode, Design, Padding };
+enum class RegionKind { Constant, Barcode, Design, Padding };
 
-struct Slot {
-    SlotKind kind;
+struct Region {
+    RegionKind kind;
     std::string constant;
     size_t stem_length = 0;
 };
 
-// The construct from 5' to 3' as an ordered list of slots.
+// The construct from 5' to 3' as an ordered list of regions.
 struct Layout {
-    std::vector<Slot> slots;
+    std::vector<Region> regions;
 };
 
-// Parses a comma-separated list of slots such as "const:ACGT,barcode:10,design,padding".
+// Parses a comma-separated list of regions such as "const:ACGT,barcode:10,design,padding".
 Layout parse_layout(const std::string& text);
 
-size_t design_slot(const Layout& layout);
-bool has_padding_slot(const Layout& layout);
-size_t padding_slot(const Layout& layout);
+size_t design_region(const Layout& layout);
+bool has_padding_region(const Layout& layout);
+size_t padding_region(const Layout& layout);
 PaddingSide padding_side(const Layout& layout);
-std::vector<size_t> barcode_slots(const Layout& layout);
+std::vector<size_t> barcode_regions(const Layout& layout);
 
-// Sums the lengths of the constant and barcode slots.
+// Sums the lengths of the constant and barcode regions.
 size_t fixed_length(const Layout& layout);
 
-// Names each slot by kind and ordinal, for example const_1, barcode_2, design, padding.
-std::vector<std::string> slot_names(const Layout& layout);
+// Names each region by kind and ordinal, for example const_1, barcode_2, design, padding.
+std::vector<std::string> region_names(const Layout& layout);
 
 #endif

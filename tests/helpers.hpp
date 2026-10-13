@@ -11,6 +11,20 @@
 
 #include "csv.hpp"
 #include "files.hpp"
+#include "stem.hpp"
+
+// Stem limits with every field set, so that no test depends on the program defaults.
+inline StemLimits test_limits() {
+    StemLimits limits;
+    limits.min_length = 7;
+    limits.max_length = 13;
+    limits.max_au = UNLIMITED;
+    limits.max_gc = 5;
+    limits.max_gu = 0;
+    limits.terminal_gc = 1;
+    limits.spacer = 2;
+    return limits;
+}
 
 // A temporary directory that is removed on destruction.
 class TempDir {

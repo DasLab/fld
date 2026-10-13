@@ -87,3 +87,13 @@ TEST_CASE("run_m2 writes the wild type and the mutants") {
     CHECK_NOTHROW(run_m2(input, output, true, true, rng));
     CHECK(read_fasta(output).size() == 2 + 9 + 6);
 }
+
+TEST_CASE("run_m2 rejects an empty name and a duplicate name") {
+    TempDir dir;
+    std::string input = dir.file("in.fasta");
+    std::string output = dir.file("out.fasta");
+    write_fasta_file(input, {{"", "ACGT"}});
+    CHECK_THROWS_WITH(run_m2(input, output, false, false, rng), doctest::Contains("empty name"));
+    write_fasta_file(input, {{"a x", "ACGT"}, {"a y", "ACGT"}});
+    CHECK_THROWS_WITH(run_m2(input, output, false, false, rng), doctest::Contains("'a'"));
+}

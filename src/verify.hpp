@@ -16,7 +16,7 @@ void verify_library(
     size_t construct_length
 );
 
-// Throws unless the assignment uses every component exactly once within its group.
+// Throws unless the assignment uses every candidate exactly once within its group.
 void require_permutation(const std::vector<size_t>& assignment, const Groups& groups);
 
 // Throws unless every construct has one finite value per read column.

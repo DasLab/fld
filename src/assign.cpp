@@ -50,9 +50,9 @@ std::vector<size_t> anti_sorted_assignment(
     std::vector<size_t> assignment(partial.size());
     for (const std::vector<size_t>& group : groups) {
         std::vector<size_t> constructs = sorted_by(group, partial, true);
-        std::vector<size_t> components = sorted_by(group, pool, false);
+        std::vector<size_t> candidates = sorted_by(group, pool, false);
         for (size_t i = 0; i < group.size(); i++) {
-            assignment[constructs[i]] = components[i];
+            assignment[constructs[i]] = candidates[i];
         }
     }
     return assignment;
@@ -60,7 +60,7 @@ std::vector<size_t> anti_sorted_assignment(
 
 static std::vector<double> add_assigned(
     const std::vector<double>& totals,
-    const ComponentPool& pool,
+    const CandidatePool& pool,
     const std::vector<size_t>& assignment,
     double sign
 ) {
@@ -73,11 +73,11 @@ static std::vector<double> add_assigned(
 
 static std::vector<std::vector<size_t>> initial_assignments(
     const std::vector<double>& base,
-    const std::vector<ComponentPool>& pools
+    const std::vector<CandidatePool>& pools
 ) {
     std::vector<std::vector<size_t>> assignments;
     std::vector<double> partial = base;
-    for (const ComponentPool& pool : pools) {
+    for (const CandidatePool& pool : pools) {
         assignments.push_back(anti_sorted_assignment(partial, pool.reads, pool.groups));
         partial = add_assigned(partial, pool, assignments.back(), 1.0);
     }
@@ -87,7 +87,7 @@ static std::vector<std::vector<size_t>> initial_assignments(
 // Reassigns one pool against the other pools and reports whether the variance fell.
 static bool improve_pool(
     std::vector<double>& totals,
-    const ComponentPool& pool,
+    const CandidatePool& pool,
     std::vector<size_t>& assignment
 ) {
     std::vector<double> partial = add_assigned(totals, pool, assignment, -1.0);
@@ -103,7 +103,7 @@ static bool improve_pool(
 
 std::vector<std::vector<size_t>> minimize_variance(
     const std::vector<double>& base,
-    const std::vector<ComponentPool>& pools
+    const std::vector<CandidatePool>& pools
 ) {
     std::vector<std::vector<size_t>> assignments = initial_assignments(base, pools);
     std::vector<double> totals = base;

@@ -1,7 +1,7 @@
 CXX ?= c++
 CXXFLAGS ?= -O2 -Wall -Wextra
 STD := -std=c++17
-PREFIX ?= /usr/local
+PREFIX ?= $(HOME)/.local
 
 SRC := $(wildcard src/*.cpp)
 LIB_SRC := $(filter-out src/main.cpp,$(SRC))
@@ -15,7 +15,7 @@ all: bin/fld
 
 bin/fld: $(OBJ)
 	@mkdir -p bin
-	$(CXX) $(STD) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(STD) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
 build/%.o: src/%.cpp
 	@mkdir -p build
@@ -26,14 +26,14 @@ build/tests/%.o: tests/%.cpp
 	$(CXX) $(STD) $(CXXFLAGS) -MMD -MP -Isrc -c -o $@ $<
 
 build/fld_tests: $(TEST_OBJ) $(LIB_OBJ)
-	$(CXX) $(STD) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(STD) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
 test: build/fld_tests
 	./build/fld_tests
 
 install: bin/fld
-	install -d $(PREFIX)/bin
-	install bin/fld $(PREFIX)/bin/fld
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install bin/fld $(DESTDIR)$(PREFIX)/bin/fld
 
 clean:
 	rm -rf build bin
