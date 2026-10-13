@@ -18,7 +18,7 @@ struct StemLimits {
     size_t max_au = UNLIMITED;
     size_t max_gc = 5;
     size_t max_gu = 0;
-    size_t closing_gc = 1;
+    size_t terminal_gc = 1;
     size_t spacer = 2;
 };
 

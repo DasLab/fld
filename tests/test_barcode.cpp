@@ -52,7 +52,7 @@ TEST_CASE("count_hairpins counts stems and loops") {
     limits.max_au = 0;
     limits.max_gc = 4;
     limits.max_gu = 0;
-    limits.closing_gc = 1;
+    limits.terminal_gc = 1;
     // Every pair is GC, so the only freedom is the orientation of each pair and the loop.
     CHECK(count_hairpins(4, limits) == 16 * tetraloop_count());
 }

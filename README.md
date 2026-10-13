@@ -147,7 +147,7 @@ Sequences may be DNA or RNA, in upper or lower case. IUPAC codes such as `N` are
 | `--max-au N` | maximum AU pairs per stem (default unlimited) |
 | `--max-gc N` | maximum GC pairs per stem (default 5) |
 | `--max-gu N` | maximum GU pairs per stem (default 0) |
-| `--closing-gc N` | GC pairs that close each stem (default 1) |
+| `--terminal-gc N` | GC pairs at the open end of each stem, which keep it from fraying (default 1) |
 
 The three maximums accept `unlimited`. The pair limits apply to padding and to every barcode slot. If the run reports that there are not enough barcodes, increase the barcode stem length or raise `--max-gu` or `--max-gc`.
 

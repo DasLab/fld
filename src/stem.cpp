@@ -43,14 +43,14 @@ void validate_stem_length(size_t stem_length, const StemLimits& limits) {
             "Stem length " + std::to_string(stem_length) + " is shorter than the minimum of " +
             std::to_string(SHORTEST_STEM));
     }
-    if (limits.closing_gc > stem_length) {
+    if (limits.terminal_gc > stem_length) {
         throw std::runtime_error(
-            "The closing GC count " + std::to_string(limits.closing_gc) +
+            "The terminal GC count " + std::to_string(limits.terminal_gc) +
             " exceeds the stem length " + std::to_string(stem_length));
     }
-    if (limits.closing_gc > limits.max_gc) {
+    if (limits.terminal_gc > limits.max_gc) {
         throw std::runtime_error(
-            "The closing GC count " + std::to_string(limits.closing_gc) +
+            "The terminal GC count " + std::to_string(limits.terminal_gc) +
             " exceeds the maximum GC count " + count_text(limits.max_gc));
     }
     if (pair_capacity(limits) < stem_length) {
@@ -117,14 +117,14 @@ static BasePair random_pair(PairBudget& budget, Rng& rng) {
 static std::vector<BasePair> random_stem(size_t stem_length, const StemLimits& limits, Rng& rng) {
     PairBudget budget{limits.max_au, limits.max_gc, limits.max_gu};
     std::vector<BasePair> pairs;
-    for (size_t i = 0; i < limits.closing_gc; i++) {
+    for (size_t i = 0; i < limits.terminal_gc; i++) {
         pairs.push_back(sample_element(GC_PAIRS, rng));
         spend(budget.gc);
     }
     while (pairs.size() < stem_length) {
         pairs.push_back(random_pair(budget, rng));
     }
-    std::shuffle(pairs.begin() + limits.closing_gc, pairs.end(), rng);
+    std::shuffle(pairs.begin() + limits.terminal_gc, pairs.end(), rng);
     return pairs;
 }
 

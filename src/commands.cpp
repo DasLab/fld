@@ -28,14 +28,14 @@ static const std::string SPACER_OPTION = "--spacer";
 static const std::string MAX_AU_OPTION = "--max-au";
 static const std::string MAX_GC_OPTION = "--max-gc";
 static const std::string MAX_GU_OPTION = "--max-gu";
-static const std::string CLOSING_GC_OPTION = "--closing-gc";
+static const std::string TERMINAL_GC_OPTION = "--terminal-gc";
 
 static void add_pair_options(Command& command) {
     StemLimits defaults;
     command.add_option(MAX_AU_OPTION, "Maximum AU pairs per stem", count_text(defaults.max_au));
     command.add_option(MAX_GC_OPTION, "Maximum GC pairs per stem", count_text(defaults.max_gc));
     command.add_option(MAX_GU_OPTION, "Maximum GU pairs per stem", count_text(defaults.max_gu));
-    command.add_option(CLOSING_GC_OPTION, "GC pairs that close each stem", count_text(defaults.closing_gc));
+    command.add_option(TERMINAL_GC_OPTION, "GC pairs at the open end of each stem", count_text(defaults.terminal_gc));
 }
 
 static void add_padding_options(Command& command) {
@@ -54,7 +54,7 @@ static StemLimits pair_limits_from(const Command& command) {
     limits.max_au = command.count_value(MAX_AU_OPTION);
     limits.max_gc = command.count_value(MAX_GC_OPTION);
     limits.max_gu = command.count_value(MAX_GU_OPTION);
-    limits.closing_gc = command.size_value(CLOSING_GC_OPTION);
+    limits.terminal_gc = command.size_value(TERMINAL_GC_OPTION);
     return limits;
 }
 

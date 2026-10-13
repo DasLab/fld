@@ -80,9 +80,9 @@ static size_t orientation_count(size_t stem_length) {
 }
 
 static size_t count_stems(size_t stem_length, const StemLimits& limits) {
-    size_t free_pairs = stem_length - limits.closing_gc;
+    size_t free_pairs = stem_length - limits.terminal_gc;
     size_t max_au = std::min(limits.max_au, free_pairs);
-    size_t max_gc = std::min(limits.max_gc - limits.closing_gc, free_pairs);
+    size_t max_gc = std::min(limits.max_gc - limits.terminal_gc, free_pairs);
     size_t max_gu = std::min(limits.max_gu, free_pairs);
     CountTable table = count_kind_sequences(free_pairs, max_au, max_gc, max_gu);
     size_t kinds = sum_table(table, free_pairs, max_gu);

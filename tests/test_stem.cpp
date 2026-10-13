@@ -27,7 +27,7 @@ TEST_CASE("random_hairpin has stem, loop, and antisense stem") {
 TEST_CASE("random_hairpin closes the stem with GC pairs") {
     Rng rng = make_rng(4);
     StemLimits limits;
-    limits.closing_gc = 2;
+    limits.terminal_gc = 2;
     for (int i = 0; i < 20; i++) {
         std::string hairpin = random_hairpin(8, limits, rng);
         CHECK(is_gc_pair(hairpin[0], hairpin.back()));
@@ -60,7 +60,7 @@ TEST_CASE("validate_stem_limits rejects inconsistent limits") {
     limits.max_gc = 0;
     CHECK_THROWS(validate_stem_limits(limits));
     limits = StemLimits();
-    limits.closing_gc = 8;
+    limits.terminal_gc = 8;
     CHECK_THROWS(validate_stem_limits(limits));
     limits = StemLimits();
     limits.max_length = 6;
