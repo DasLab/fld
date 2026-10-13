@@ -31,11 +31,19 @@ std::string file_stem(const std::string& path) {
     return std::filesystem::path(path).stem().string();
 }
 
+void require_written(std::ofstream& file, const std::string& path) {
+    file.flush();
+    if (!file) {
+        throw std::runtime_error("Writing to '" + path + "' failed");
+    }
+}
+
 void write_lines(const std::string& path, const std::vector<std::string>& lines) {
     std::ofstream file = open_output(path);
     for (const std::string& line : lines) {
         file << line << "\n";
     }
+    require_written(file, path);
 }
 
 static void strip_line_ending(std::string& line) {

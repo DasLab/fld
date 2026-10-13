@@ -1,5 +1,6 @@
 CXX ?= c++
-CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra
+CXXFLAGS ?= -O2 -Wall -Wextra
+STD := -std=c++17
 PREFIX ?= /usr/local
 
 SRC := $(wildcard src/*.cpp)
@@ -14,18 +15,18 @@ all: bin/fld
 
 bin/fld: $(OBJ)
 	@mkdir -p bin
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(STD) $(CXXFLAGS) -o $@ $^
 
 build/%.o: src/%.cpp
 	@mkdir -p build
-	$(CXX) $(CXXFLAGS) -MMD -MP -c -o $@ $<
+	$(CXX) $(STD) $(CXXFLAGS) -MMD -MP -c -o $@ $<
 
 build/tests/%.o: tests/%.cpp
 	@mkdir -p build/tests
-	$(CXX) $(CXXFLAGS) -MMD -MP -Isrc -c -o $@ $<
+	$(CXX) $(STD) $(CXXFLAGS) -MMD -MP -Isrc -c -o $@ $<
 
 build/fld_tests: $(TEST_OBJ) $(LIB_OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(STD) $(CXXFLAGS) -o $@ $^
 
 test: build/fld_tests
 	./build/fld_tests

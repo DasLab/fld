@@ -14,6 +14,9 @@ void require_writable(const std::string& path, bool overwrite);
 // Opens a file for writing and throws if that fails.
 std::ofstream open_output(const std::string& path);
 
+// Flushes the stream and throws if any write to it failed.
+void require_written(std::ofstream& file, const std::string& path);
+
 std::string join_path(const std::string& directory, const std::string& name);
 
 // Returns the file name without directory and extension.

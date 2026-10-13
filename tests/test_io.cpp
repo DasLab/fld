@@ -29,6 +29,10 @@ TEST_CASE("read_fasta joins lines and strips carriage returns") {
     CHECK(entries[1].sequence == "GGGG");
 }
 
+TEST_CASE("write_lines reports a failed write" * doctest::skip(!std::filesystem::exists("/dev/full"))) {
+    CHECK_THROWS_WITH(write_lines("/dev/full", {"line"}), doctest::Contains("failed"));
+}
+
 TEST_CASE("read_fasta rejects empty entries and headerless data") {
     TempDir dir;
     std::string path = dir.file("in.fasta");

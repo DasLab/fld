@@ -9,7 +9,6 @@
 
 static const std::string PROGRAM_NAME = "fld";
 static const std::string VERSION_OPTION = "--version";
-static const std::string HELP_OPTION = "--help";
 
 static std::string top_usage() {
     return "Usage: " + PROGRAM_NAME + " <command> [options]\n\n"
@@ -29,7 +28,7 @@ static int dispatch(const std::string& name, const std::vector<std::string>& arg
 
 int main(int argc, char** argv) {
     std::vector<std::string> args(argv + 1, argv + argc);
-    if (args.empty() || args.front() == HELP_OPTION) {
+    if (args.empty() || is_help_option(args.front())) {
         std::cout << top_usage();
         return 0;
     }

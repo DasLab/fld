@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+// Returns true for --help and -h.
+bool is_help_option(const std::string& arg);
+
 // Thrown when the user asks for help. The message is the usage text.
 class HelpRequested : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -45,6 +48,9 @@ public:
 
     bool has(const std::string& name) const;
     std::string value(const std::string& name) const;
+
+    // Parses the value as a non-negative integer.
+    size_t size_value(const std::string& name) const;
 
     // Parses the value as a count, which accepts "unlimited".
     size_t count_value(const std::string& name) const;

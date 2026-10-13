@@ -62,19 +62,42 @@ static std::string sublibrary_name(const std::string& input) {
     return name;
 }
 
+static std::string m2_sublibrary_name(const std::string& name) {
+    return name + M2_SUFFIX;
+}
+
+// Returns the names of the sublibraries that the run writes, in output order.
+static std::vector<std::string> sublibrary_names(const PipelineOptions& options) {
+    std::vector<std::string> names;
+    for (const std::string& input : options.inputs) {
+        names.push_back(sublibrary_name(input));
+        if (options.m2) {
+            names.push_back(m2_sublibrary_name(names.back()));
+        }
+    }
+    return names;
+}
+
+static void require_distinct_sublibraries(const PipelineOptions& options) {
+    std::set<std::string> seen;
+    for (const std::string& name : sublibrary_names(options)) {
+        if (!seen.insert(name).second) {
+            throw std::runtime_error("Two sublibraries would both be named '" + name + "'");
+        }
+    }
+}
+
 static void validate_options(const PipelineOptions& options) {
     if (options.inputs.empty()) {
         throw std::runtime_error("At least one input FASTA file is required");
     }
-    std::set<std::string> names;
     for (const std::string& input : options.inputs) {
         require_file(input);
-        if (!names.insert(sublibrary_name(input)).second) {
-            throw std::runtime_error(
-                "Two input files are both named '" + sublibrary_name(input) + "', which would give two sublibraries the same name");
-        }
     }
-    validate_stem_limits(options.stem);
+    require_distinct_sublibraries(options);
+    if (has_padding_slot(options.layout)) {
+        validate_stem_limits(options.stem);
+    }
     for (size_t slot : barcode_slots(options.layout)) {
         validate_stem_length(options.layout.slots[slot].stem_length, options.stem);
     }
@@ -91,8 +114,11 @@ static std::string tmp_dir(const PipelineOptions& options) {
     return join_path(options.output_dir, TMP_DIR);
 }
 
+// Removes the intermediate files of an earlier run, because rn-coverage appends to existing
+// prediction files.
 static void create_output_dirs(const PipelineOptions& options) {
     std::filesystem::create_directories(options.output_dir);
+    std::filesystem::remove_all(tmp_dir(options));
     if (options.predict) {
         std::filesystem::create_directories(tmp_dir(options));
     }
@@ -139,7 +165,7 @@ static std::vector<Sublibrary> load_sublibraries(const PipelineOptions& options,
         progress() << "Read " << entries.size() << " sequences from " << input << "\n";
         sublibraries.push_back(Sublibrary{name, entries});
         if (options.m2) {
-            sublibraries.push_back(Sublibrary{name + M2_SUFFIX, mutants_of(entries)});
+            sublibraries.push_back(Sublibrary{m2_sublibrary_name(name), mutants_of(entries)});
         }
     }
     return sublibraries;
@@ -176,6 +202,21 @@ static Library load_library(const PipelineOptions& options, Rng& rng) {
         throw std::runtime_error("The input files contain no sequences");
     }
     return library;
+}
+
+// Without a padding slot, nothing adjusts the length of a construct, so every design must
+// already bring its construct to the construct length.
+static void require_construct_lengths(const Library& library, size_t construct_length) {
+    if (has_padding_slot(library.layout)) return;
+    for (const Construct& construct : library.constructs) {
+        size_t length = fixed_length(library.layout) + design_length(library.layout, construct);
+        if (length != construct_length) {
+            throw std::runtime_error(
+                "Construct '" + construct.name + "' in " + construct.sublibrary + " has " +
+                std::to_string(length) + " bases, but the construct length is " +
+                std::to_string(construct_length));
+        }
+    }
 }
 
 static std::vector<size_t> padding_lengths(const Library& library, size_t construct_length) {
@@ -353,6 +394,7 @@ void run_pipeline(const PipelineOptions& options) {
     validate_options(options);
     Rng rng = make_rng(options.seed);
     Library library = load_library(options, rng);
+    require_construct_lengths(library, options.construct_length);
     std::vector<std::string> designs = design_sequences(library);
     std::vector<ComponentSet> sets = generate_components(library, options, rng);
     // Created after loading and generation, so a failed run leaves no output directory.

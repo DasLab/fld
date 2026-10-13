@@ -6,6 +6,10 @@ static const std::string PROGRAM_NAME = "fld";
 static const std::string HELP_LONG = "--help";
 static const std::string HELP_SHORT = "-h";
 
+bool is_help_option(const std::string& arg) {
+    return arg == HELP_LONG || arg == HELP_SHORT;
+}
+
 Command::Command(const std::string& name, const std::string& description)
     : _name(name), _description(description) {}
 
@@ -80,7 +84,7 @@ static bool looks_like_option(const std::string& arg) {
 void Command::parse(const std::vector<std::string>& args) {
     for (size_t i = 0; i < args.size(); i++) {
         const std::string& arg = args[i];
-        if (arg == HELP_LONG || arg == HELP_SHORT) {
+        if (is_help_option(arg)) {
             throw HelpRequested(usage());
         }
         const OptionSpec* found = find_spec(arg);
@@ -127,6 +131,14 @@ std::string Command::value(const std::string& name) const {
         throw std::runtime_error("Option " + name + " was not given");
     }
     return s.default_value;
+}
+
+size_t Command::size_value(const std::string& name) const {
+    try {
+        return parse_size(value(name));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error("Option " + name + ": " + e.what());
+    }
 }
 
 size_t Command::count_value(const std::string& name) const {

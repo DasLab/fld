@@ -89,6 +89,7 @@ void write_library_csv(const Library& library, const std::string& path) {
     for (const Construct& construct : library.constructs) {
         file << csv_line(csv_row(construct)) << "\n";
     }
+    require_written(file, path);
 }
 
 void write_library_fasta(const Library& library, const std::string& path) {
@@ -96,4 +97,5 @@ void write_library_fasta(const Library& library, const std::string& path) {
     for (const Construct& construct : library.constructs) {
         write_fasta_entry(file, FastaEntry{fasta_name(library.layout, construct), full_sequence(construct)});
     }
+    require_written(file, path);
 }

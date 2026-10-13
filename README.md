@@ -85,7 +85,7 @@ fld pipeline designs.fasta \
 
 A layout must contain exactly one `design` slot and at most one `padding` slot. It may contain any number of constant and barcode slots, in any order.
 
-The padding length of each construct is the construct length less the lengths of the other slots. A design which leaves no room for padding ends the run early. Without a padding slot, every construct must have exactly the construct length.
+The padding length of each construct is the construct length less the lengths of the other slots. A design that needs more than the construct length ends the run early. Padding that is too short for a hairpin is random sequence. Without a padding slot, every construct must have exactly the construct length.
 
 Each barcode slot is an independent set. Within one slot, every pair of barcodes is at Hamming distance two or more.
 
@@ -149,7 +149,7 @@ Sequences may be DNA or RNA, in upper or lower case. IUPAC codes such as `N` are
 | `--max-gu N` | maximum GU pairs per stem (default 0) |
 | `--closing-gc N` | GC pairs that close each stem (default 1) |
 
-The pair limits apply to padding and to every barcode slot. If the run reports that there are not enough barcodes, increase the barcode stem length or raise `--max-gu` or `--max-gc`.
+The three maximums accept `unlimited`. The pair limits apply to padding and to every barcode slot. If the run reports that there are not enough barcodes, increase the barcode stem length or raise `--max-gu` or `--max-gc`.
 
 ### Prediction
 
@@ -165,6 +165,8 @@ By default, the pipeline predicts reads with `rn-coverage` and chooses the paddi
 | Option | Description |
 | --- | --- |
 | `--seed N` | seed for the random number generator |
+
+The same seed reproduces a run on the same platform and compiler. Different standard libraries draw different random numbers from one seed.
 
 `fld barcodes` takes `--count N`, `--length N`, `-o FILE`, `--overwrite`, `--seed N`, and the pair limits. `fld m2` takes a FASTA file, `-o FILE`, `--overwrite`, and `--all`, which writes all three mutants per position instead of the complement only.
 

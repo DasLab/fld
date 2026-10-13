@@ -7,7 +7,8 @@
 #include "fasta.hpp"
 
 // Returns one mutant per position, each with the base replaced by its complement. The mutants
-// are written in uppercase, in the alphabet of the input.
+// are written in uppercase, in the alphabet of the input. The mutant suffix follows the first
+// word of the header.
 std::vector<FastaEntry> complement_mutants(const FastaEntry& entry);
 
 // Returns three mutants per position, one for each other base of the alphabet. The mutants are

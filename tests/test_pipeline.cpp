@@ -168,6 +168,48 @@ TEST_CASE("pipeline leaves no output directory when the input is invalid") {
     CHECK_NOTHROW(run_pipeline(options));
 }
 
+TEST_CASE("pipeline without padding rejects a wrong length before assembly") {
+    TempDir dir;
+    write_fasta_file(dir.file("in.fasta"), {{"short", "ACGTACGTA"}});
+    PipelineOptions options = base_options(dir, "const:GGGG,design,const:CCCC");
+    options.construct_length = 18;
+    CHECK_THROWS_WITH(run_pipeline(options), doctest::Contains("construct length is 18"));
+}
+
+TEST_CASE("pipeline without padding ignores the padding stem limits") {
+    TempDir dir;
+    write_fasta_file(dir.file("in.fasta"), {{"one", "ACGTACGTAC"}});
+    PipelineOptions options = base_options(dir, "design,barcode:5");
+    options.construct_length = 10 + hairpin_length(5);
+    options.stem.max_au = 0;
+    CHECK_THROWS(validate_stem_limits(options.stem));
+    CHECK_NOTHROW(run_pipeline(options));
+}
+
+TEST_CASE("pipeline removes the intermediate files of an earlier run") {
+    TempDir dir;
+    write_fasta_file(dir.file("in.fasta"), {{"one", "ACGT"}});
+    PipelineOptions options = base_options(dir, "padding,design");
+    run_pipeline(options);
+    std::filesystem::create_directories(dir.file("out/tmp"));
+    write_fasta_file(dir.file("out/tmp/stale.fasta"), {{"old", "ACGT"}});
+    options.overwrite = true;
+    run_pipeline(options);
+    CHECK(!std::filesystem::exists(dir.file("out/tmp/stale.fasta")));
+}
+
+TEST_CASE("pipeline rejects a mutant sublibrary that collides with an input") {
+    TempDir dir;
+    write_fasta_file(dir.file("a.fasta"), {{"one", "ACGT"}});
+    write_fasta_file(dir.file("a_m2.fasta"), {{"two", "ACGT"}});
+    PipelineOptions options = base_options(dir, "padding,design");
+    options.inputs = {dir.file("a.fasta"), dir.file("a_m2.fasta")};
+    CHECK_NOTHROW(run_pipeline(options));
+    options.m2 = true;
+    options.overwrite = true;
+    CHECK_THROWS_WITH(run_pipeline(options), doctest::Contains("a_m2"));
+}
+
 TEST_CASE("pipeline rejects input file names with whitespace") {
     TempDir dir;
     write_fasta_file(dir.file("my lib.fasta"), {{"one", "ACGT"}});

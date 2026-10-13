@@ -54,15 +54,15 @@ static StemLimits pair_limits_from(const Command& command) {
     limits.max_au = command.count_value(MAX_AU_OPTION);
     limits.max_gc = command.count_value(MAX_GC_OPTION);
     limits.max_gu = command.count_value(MAX_GU_OPTION);
-    limits.closing_gc = command.count_value(CLOSING_GC_OPTION);
+    limits.closing_gc = command.size_value(CLOSING_GC_OPTION);
     return limits;
 }
 
 static StemLimits stem_limits_from(const Command& command) {
     StemLimits limits = pair_limits_from(command);
-    limits.min_length = command.count_value(MIN_STEM_OPTION);
-    limits.max_length = command.count_value(MAX_STEM_OPTION);
-    limits.spacer = command.count_value(SPACER_OPTION);
+    limits.min_length = command.size_value(MIN_STEM_OPTION);
+    limits.max_length = command.size_value(MAX_STEM_OPTION);
+    limits.spacer = command.size_value(SPACER_OPTION);
     return limits;
 }
 
@@ -70,7 +70,7 @@ static std::optional<size_t> seed_from(const Command& command) {
     if (!command.has(SEED_OPTION)) {
         return std::nullopt;
     }
-    return command.count_value(SEED_OPTION);
+    return command.size_value(SEED_OPTION);
 }
 
 static Command pipeline_command() {
@@ -95,7 +95,7 @@ static PipelineOptions pipeline_options_from(const Command& command) {
     options.output_dir = command.value(OUTPUT_OPTION);
     options.overwrite = command.flag(OVERWRITE_OPTION);
     options.layout = parse_layout(command.value(LAYOUT_OPTION));
-    options.construct_length = command.count_value(CONSTRUCT_LENGTH_OPTION);
+    options.construct_length = command.size_value(CONSTRUCT_LENGTH_OPTION);
     options.stem = stem_limits_from(command);
     options.m2 = command.flag(M2_OPTION);
     options.predict = !command.flag(NO_PREDICT_OPTION);
@@ -129,7 +129,7 @@ int run_barcodes_command(const std::vector<std::string>& args) {
     require_writable(output, command.flag(OVERWRITE_OPTION));
     Rng rng = make_rng(seed_from(command));
     std::vector<std::string> barcodes = random_barcodes(
-        command.count_value(COUNT_OPTION), command.count_value(LENGTH_OPTION), pair_limits_from(command), rng);
+        command.size_value(COUNT_OPTION), command.size_value(LENGTH_OPTION), pair_limits_from(command), rng);
     write_lines(output, barcodes);
     return 0;
 }

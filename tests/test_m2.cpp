@@ -19,6 +19,18 @@ TEST_CASE("complement_mutants and all_mutants accept lowercase input") {
     CHECK(all_mutants({"seq", "acgt"}).size() == 12);
 }
 
+TEST_CASE("mutant suffixes follow the first word of the header") {
+    std::vector<FastaEntry> mutants = complement_mutants({"seq some description", "AC"});
+    REQUIRE(mutants.size() == 2);
+    CHECK(mutants[0].name == "seq_mm_0_A_T some description");
+    TempDir dir;
+    std::string input = dir.file("in.fasta");
+    std::string output = dir.file("out.fasta");
+    write_fasta_file(input, {{"seq some description", "AC"}});
+    run_m2(input, output, false, false);
+    CHECK(read_fasta(output)[0].name == "seq_wt some description");
+}
+
 TEST_CASE("complement_mutants skips ambiguous positions") {
     CHECK(complement_mutants({"seq", "ANGT"}).size() == 3);
 }
